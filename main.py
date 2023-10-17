@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.websockets import WebSocket
 import httpx
 
 app = FastAPI()
@@ -25,3 +26,12 @@ async def make_http_call():
         else:
             # Handle error cases here
             return {"error": "Failed to fetch data from the external API", "status_code": response.status_code}
+        
+
+
+@app.websocket("/ws/{chatroom_id}")
+async def websocket_endpoint(websocket: WebSocket, chatroom_id: str):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
