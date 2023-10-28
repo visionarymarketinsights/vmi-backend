@@ -2,15 +2,22 @@ from fastapi import FastAPI,  APIRouter
 from mailjet_rest import Client
 import os
 
+from pydantic import BaseModel
+
 api_key = os.environ["MJ_APIKEY_PUBLIC"]
 api_secret = os.environ["MJ_APIKEY_PRIVATE"]
 
 mailjet = Client(auth=(api_key, api_secret), version="v3.1")
 
+
+class EmailRequest(BaseModel):
+    subject: str
+    content: str
+
 router = APIRouter()
 
-@router.get("/email")
-async def email(subject: str, content: str):
+@router.post("/email")
+async def email(email_request:EmailRequest):
     data = {
         "Messages": [
             {
@@ -24,8 +31,8 @@ async def email(subject: str, content: str):
                         "Name": "Siddhant Pandagle",
                     }
                 ],
-                "Subject": subject,
-                "HTMLPart": content,
+                "Subject": email_request.subject,
+                "HTMLPart": email_request.content,
             }
         ]
     }
