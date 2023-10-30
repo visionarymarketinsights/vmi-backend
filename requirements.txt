@@ -3,5 +3,4 @@ hypercorn==0.14.4
 mailjet_rest
 python-dotenv==1.0.0
 psycopg2==2.9.9
-mailjet-rest==1.3.4
 SQLAlchemy==2.0.22
