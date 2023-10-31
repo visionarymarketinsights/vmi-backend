@@ -1,10 +1,17 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
-from fastapi import FastAPI,  APIRouter, HTTPException
+from fastapi import FastAPI,  APIRouter, HTTPException, Request
 import os
 
 from pydantic import BaseModel
+
+
+from slowapi.errors import RateLimitExceeded
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+
+from ..utils.rate_limit import limiter
 
 smtp_pass = os.environ["SIDSMTP"]
 
@@ -16,7 +23,8 @@ class EmailRequest(BaseModel):
 router = APIRouter()
 
 @router.post("/email")
-async def email(email_request:EmailRequest):
+@limiter.limit("5/minute")
+async def email(request: Request, email_request: EmailRequest):
     try:
         # Create a message
         msg = MIMEMultipart()

@@ -1,6 +1,6 @@
 fastapi==0.100.0
 hypercorn==0.14.4
-mailjet_rest
 python-dotenv==1.0.0
 psycopg2==2.9.9
 SQLAlchemy==2.0.22
+slowapi==0.1.8
