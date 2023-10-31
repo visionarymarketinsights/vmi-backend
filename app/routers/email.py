@@ -22,6 +22,13 @@ class EmailRequest(BaseModel):
 
 router = APIRouter()
 
+
+@router.get("/check_email")
+@limiter.limit("5/minute")
+def email_check(request: Request):
+    return {}
+
+
 @router.post("/email")
 @limiter.limit("5/minute")
 async def email(request: Request, email_request: EmailRequest):
