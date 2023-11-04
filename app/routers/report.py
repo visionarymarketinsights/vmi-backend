@@ -10,7 +10,6 @@ import io
 from datetime import datetime
 from PIL import Image
 
-
 router = APIRouter()
 
 # Pydantic Models
@@ -27,6 +26,7 @@ class CreateReportRequest(BaseModel):
     meta_keyword: str  # Include the new 'meta_keyword' field
 
 class UpdateReportRequest(BaseModel):
+    id: int
     title: str
     url: str  # Include the new 'url' field
     category: str  # Include the new 'category' field
@@ -48,8 +48,10 @@ class ReportResponse(BaseModel):
 # Update the API routes
 @router.get("/reports")
 async def get_reports(db: Session = Depends(get_db)):
-    reports = db.query(Report).all()
-    return {"data": reports}
+    # reports = db.query(Report).all()
+    reports = db.query(Report).with_entities(Report.id, Report.url, Report.category).all()
+    report_list = [dict(zip(('id', 'url', 'category'), report)) for report in reports]
+    return {"data": report_list}
 
 @router.post("/reports")
 async def create_report(report: CreateReportRequest, db: Session = Depends(get_db)):
@@ -60,8 +62,8 @@ async def create_report(report: CreateReportRequest, db: Session = Depends(get_d
     return {"data": db_report}
 
 @router.put("/reports/{report_id}")
-async def update_report(report_id: int, new_report: UpdateReportRequest, db: Session = Depends(get_db)):
-    existing_report = db.query(Report).filter(Report.id == report_id).first()
+async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
+    existing_report = db.query(Report).filter(Report.id == new_report.id).first()
     if existing_report is None:
         raise HTTPException(status_code=404, detail="Report not found")
 
