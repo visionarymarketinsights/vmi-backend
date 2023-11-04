@@ -16,8 +16,6 @@ from slowapi.util import get_remote_address
 
 from fastapi.staticfiles import StaticFiles
 
-
-
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -46,3 +44,5 @@ async def root():
 
 app.include_router(report.router)
 app.include_router(email.router)
+
+print('Test Push')
