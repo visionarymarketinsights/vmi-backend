@@ -1,8 +1,7 @@
-# Import necessary modules and dependencies
 from fastapi import Depends, APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Report  # Import the Report model
+from app.models import Report
 from app.database import get_db
 from sqlalchemy import func
 import os
@@ -12,54 +11,99 @@ from PIL import Image
 
 router = APIRouter()
 
-# Pydantic Models
+
 class CreateReportRequest(BaseModel):
     title: str
-    url: str  # Include the new 'url' field
-    category: str  # Include the new 'category' field
-    description: str  # Include the new 'description' field
-    toc: str  # Include the new 'toc' field
-    highlights: str  # Include the new 'highlights' field
-    methodology: str  # Include the new 'methodology' field
-    meta_title: str  # Include the new 'meta_title' field
-    meta_desc: str  # Include the new 'meta_desc' field
-    meta_keyword: str  # Include the new 'meta_keyword' field
+    url: str
+    category: str
+    description: str
+    toc: str
+    highlights: str
+    methodology: str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
+    pages: str
+    created_date: str
+
 
 class UpdateReportRequest(BaseModel):
     id: int
     title: str
-    url: str  # Include the new 'url' field
-    category: str  # Include the new 'category' field
-    description: str  # Include the new 'description' field
-    toc: str  # Include the new 'toc' field
-    highlights: str  # Include the new 'highlights' field
-    methodology: str  # Include the new 'methodology' field
-    meta_title: str  # Include the new 'meta_title' field
-    meta_desc: str  # Include the new 'meta_desc' field
-    meta_keyword: str  # Include the new 'meta_keyword' field
+    url: str
+    category: str
+    description: str
+    toc: str
+    highlights: str
+    methodology: str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
+    pages: str
+    created_date: str
 
-class ReportResponse(BaseModel):
+
+class ReportListSchema(BaseModel):
     id: int
-    title: str
-    url: str  # Include the new 'url' field
-    category: str  # Include the new 'category' field
-    description: str  # Include the new 'description' field
+    url: str
+    category: str
 
-# Update the API routes
+
 @router.get("/reports")
 async def get_reports(db: Session = Depends(get_db)):
-    # reports = db.query(Report).all()
-    reports = db.query(Report).with_entities(Report.id, Report.url, Report.category).all()
-    report_list = [dict(zip(('id', 'url', 'category'), report)) for report in reports]
+    reports = (
+        db.query(Report).with_entities(Report.id, Report.url, Report.category).all()
+    )
+    report_list = [
+        ReportListSchema(id=report.id, url=report.url, category=report.category)
+        for report in reports
+    ]
     return {"data": report_list}
+
+
+@router.get("/reports/{report_id}")
+async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
+    report = db.query(Report).filter(Report.id == report_id).first()
+    return {"data": report}
+
+
+@router.get("/reports/category/{category}")
+async def get_reports_by_category(
+    category: str,
+    page: int,
+    per_page: int,
+    db: Session = Depends(get_db),
+):
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    # Calculate the offset to skip records based on the page and per_page values
+    offset = (page - 1) * per_page
+
+    reports = (
+        db.query(Report)
+        .filter(Report.category == category)
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+    
+    report_list = [
+        ReportListSchema(id=report.id, url=report.url, category=report.category)
+        for report in reports
+    ]
+
+    return {"data": report_list}
+
 
 @router.post("/reports")
 async def create_report(report: CreateReportRequest, db: Session = Depends(get_db)):
-    db_report = Report(**report.dict(), created_date=func.now())  # Set 'created_date' using func.now()
+    db_report = Report(**report.dict())
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
     return {"data": db_report}
+
 
 @router.put("/reports/{report_id}")
 async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
@@ -73,6 +117,7 @@ async def update_report(new_report: UpdateReportRequest, db: Session = Depends(g
     db.commit()
     db.refresh(existing_report)
     return {"data": existing_report}
+
 
 @router.delete("/reports/{report_id}")
 async def delete_report(report_id: int, db: Session = Depends(get_db)):
@@ -88,31 +133,22 @@ async def delete_report(report_id: int, db: Session = Depends(get_db)):
 @router.post("/upload")
 def upload(file: UploadFile = File(...)):
     try:
-        # Generate a timestamp
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-        # Get the file extension
         file_extension = file.filename.split(".")[-1]
 
-        # Specify the destination folder path
         destination_folder = "images"
         os.makedirs(destination_folder, exist_ok=True)
 
-        # Build the full file path including the timestamp and extension
         file_path = os.path.join(destination_folder, f"{timestamp}.{file_extension}")
 
-        # Read the contents of the uploaded file
         contents = file.file.read()
 
-        # Create a PIL Image object from the uploaded contents
         image = Image.open(io.BytesIO(contents))
 
-        # Resize the image to your desired dimensions
-        # For example, resize the image to a maximum width of 800 pixels while maintaining the aspect ratio
         max_width = 800
         image.thumbnail((max_width, max_width))
 
-        # Save the compressed image to the specified file path
         image.save(file_path)
 
     except Exception:
@@ -120,4 +156,6 @@ def upload(file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-    return {"message": f"Successfully uploaded and compressed {file.filename} to {file_path}"}
+    return {
+        "message": f"Successfully uploaded and compressed {file.filename} to {file_path}"
+    }

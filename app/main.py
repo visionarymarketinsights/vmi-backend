@@ -40,9 +40,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"greeting": "Hello!", "message": "This api works!"}
+app.include_router(report.router, tags=["Report"])
+app.include_router(email.router, tags=["Email"])
 
-
-app.include_router(report.router)
-app.include_router(email.router)
-
-print('Test Push')

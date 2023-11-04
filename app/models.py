@@ -16,4 +16,5 @@ class Report(Base):
     meta_title = Column(String)
     meta_desc = Column(String)
     meta_keyword = Column(String)
-    created_date = Column(DateTime, default=func.now())
+    pages = Column(String)
+    created_date = Column(String)
