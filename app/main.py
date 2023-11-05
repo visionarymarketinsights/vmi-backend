@@ -1,11 +1,12 @@
 from dotenv import load_dotenv
 from fastapi.responses import PlainTextResponse
+
 load_dotenv()
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from . import models
-from .database import engine,  get_db
+from .database import engine, get_db
 from .utils.rate_limit import limiter
 from app.routers import email, report
 
@@ -23,9 +24,10 @@ app = FastAPI()
 app.mount("/images", StaticFiles(directory="images"), name="images")
 
 origins = [
+    "https://localhost:3000",
     "http://localhost:3000",
     "https://congruence.onrender.com",
-    "https://congruence.178765.xyz"
+    "https://congruence.178765.xyz",
 ]
 
 app.add_middleware(
@@ -40,6 +42,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"greeting": "Hello!", "message": "This api works!"}
-app.include_router(report.router, prefix='/reports', tags=["Report"])
-app.include_router(email.router, tags=["Email"])
 
+
+app.include_router(report.router, prefix="/reports", tags=["Report"])
+app.include_router(email.router, tags=["Email"])
