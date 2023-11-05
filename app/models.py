@@ -18,3 +18,13 @@ class Report(Base):
     meta_keyword = Column(String)
     pages = Column(String)
     created_date = Column(String)
+    
+
+
+class Category(Base):
+    __tablename__ = "category"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    abr = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False, unique=True)
+    icon = Column(String, nullable=False)

@@ -49,6 +49,14 @@ class ReportListSchema(BaseModel):
     category: str
 
 
+class CategoryReportListSchema(BaseModel):
+    id: int
+    url: str
+    category: str
+    pages: str
+    created_date: str
+
+
 @router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
@@ -92,7 +100,9 @@ async def get_reports_by_category(
     offset = (page - 1) * per_page
 
     reports = (
+        # db.query(Report)
         db.query(Report)
+        .with_entities(Report.id, Report.url, Report.category, Report.pages, Report.created_date)
         .filter(Report.category == category)
         .offset(offset)
         .limit(per_page)
@@ -100,7 +110,14 @@ async def get_reports_by_category(
     )
 
     report_list = [
-        ReportListSchema(id=report.id, url=report.url, category=report.category)
+        CategoryReportListSchema(
+            id=report.id,
+            url=report.url,
+            category=report.category,
+            pages=report.pages,
+            created_date=report.created_date,
+            # description=report.description,
+        )
         for report in reports
     ]
 
