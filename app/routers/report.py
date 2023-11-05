@@ -49,7 +49,7 @@ class ReportListSchema(BaseModel):
     category: str
 
 
-@router.get("/reports")
+@router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
         db.query(Report).with_entities(Report.id, Report.url, Report.category).all()
@@ -61,13 +61,24 @@ async def get_reports(db: Session = Depends(get_db)):
     return {"data": report_list}
 
 
-@router.get("/reports/{report_id}")
+@router.get("/category/category_count")
+async def get_category_count(db: Session = Depends(get_db)):
+    query = (
+        db.query(Report.category, func.count(Report.category))
+        .group_by(Report.category)
+        .all()
+    )
+    result = [{"category": category, "count": count} for category, count in query]
+    return {"data": result}
+
+
+@router.get("/{report_id}")
 async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     return {"data": report}
 
 
-@router.get("/reports/category/{category}")
+@router.get("/category/{category}")
 async def get_reports_by_category(
     category: str,
     page: int,
@@ -87,7 +98,7 @@ async def get_reports_by_category(
         .limit(per_page)
         .all()
     )
-    
+
     report_list = [
         ReportListSchema(id=report.id, url=report.url, category=report.category)
         for report in reports
@@ -96,7 +107,7 @@ async def get_reports_by_category(
     return {"data": report_list}
 
 
-@router.post("/reports")
+@router.post("/")
 async def create_report(report: CreateReportRequest, db: Session = Depends(get_db)):
     db_report = Report(**report.dict())
     db.add(db_report)
@@ -105,7 +116,7 @@ async def create_report(report: CreateReportRequest, db: Session = Depends(get_d
     return {"data": db_report}
 
 
-@router.put("/reports/{report_id}")
+@router.put("/{report_id}")
 async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
     if existing_report is None:
@@ -119,7 +130,7 @@ async def update_report(new_report: UpdateReportRequest, db: Session = Depends(g
     return {"data": existing_report}
 
 
-@router.delete("/reports/{report_id}")
+@router.delete("/{report_id}")
 async def delete_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     if report is None:
