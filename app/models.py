@@ -37,3 +37,12 @@ class ReportImage(Base):
     report_id = Column(Integer, nullable=False)
     img_name = Column(String, nullable=False)
     img_file = Column(String, nullable=False)
+
+class PressRelease(Base):
+    __tablename__ = "press_release"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    category = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    summary = Column(String, nullable=False)
+    created_date = Column(String)

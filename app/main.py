@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models
 from .database import engine, get_db
 from .utils.rate_limit import limiter
-from app.routers import email, report, report_image
+from app.routers import email, report, report_image, press_release
 
 
 from slowapi.errors import RateLimitExceeded
@@ -46,5 +46,6 @@ async def root():
 
 app.include_router(report.router, prefix="/reports", tags=["Report"])
 app.include_router(report_image.router, prefix="/report-images", tags=["Report Image"]) 
+app.include_router(press_release.router, prefix="/press_release", tags=["Press Release"]) 
 app.include_router(email.router, tags=["Email"])
 
