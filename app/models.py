@@ -9,6 +9,7 @@ class Report(Base):
     title = Column(String, nullable=False, unique=True)
     url = Column(String, nullable=False, unique=True)
     category = Column(String, nullable=False)
+    summary = Column(String)
     description = Column(String)
     toc = Column(String)
     highlights = Column(String)

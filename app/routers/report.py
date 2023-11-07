@@ -17,6 +17,7 @@ class CreateReportRequest(BaseModel):
     url: str
     category: str
     description: str
+    summary: str
     toc: str
     highlights: str
     methodology: str
@@ -33,6 +34,7 @@ class UpdateReportRequest(BaseModel):
     url: str
     category: str
     description: str
+    summary: str
     toc: str
     highlights: str
     methodology: str
@@ -45,14 +47,18 @@ class UpdateReportRequest(BaseModel):
 
 class ReportListSchema(BaseModel):
     id: int
+    title: str
     url: str
     category: str
+    summary: str
 
 
 class CategoryReportListSchema(BaseModel):
     id: int
     url: str
     category: str
+    title: str
+    summary: str
     pages: str
     created_date: str
 
@@ -60,10 +66,10 @@ class CategoryReportListSchema(BaseModel):
 @router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
-        db.query(Report).with_entities(Report.id, Report.url, Report.category).all()
+        db.query(Report).with_entities(Report.id, Report.url, Report.category, Report.summary,Report.title).all()
     )
     report_list = [
-        ReportListSchema(id=report.id, url=report.url, category=report.category)
+        ReportListSchema(id=report.id, url=report.url, category=report.category, summary=report.summary, title=report.title)
         for report in reports
     ]
     return {"data": report_list}
@@ -102,7 +108,7 @@ async def get_reports_by_category(
     reports = (
         # db.query(Report)
         db.query(Report)
-        .with_entities(Report.id, Report.url, Report.category, Report.pages, Report.created_date)
+        .with_entities(Report.id, Report.url, Report.category, Report.summary,Report.title, Report.pages, Report.created_date)
         .filter(Report.category == category)
         .offset(offset)
         .limit(per_page)
@@ -113,7 +119,9 @@ async def get_reports_by_category(
         CategoryReportListSchema(
             id=report.id,
             url=report.url,
+            title=report.title,
             category=report.category,
+            summary=report.summary,
             pages=report.pages,
             created_date=report.created_date,
             # description=report.description,
@@ -155,7 +163,6 @@ async def delete_report(report_id: int, db: Session = Depends(get_db)):
     db.delete(report)
     db.commit()
     return {"message": "Report deleted"}
-
 
 @router.post("/upload")
 def upload(file: UploadFile = File(...)):
