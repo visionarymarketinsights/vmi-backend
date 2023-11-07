@@ -123,14 +123,13 @@ async def get_reports_by_category(
 
     return {"data": report_list}
 
-
 @router.post("/")
 async def create_report(report: CreateReportRequest, db: Session = Depends(get_db)):
     db_report = Report(**report.dict())
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
-    return {"data": db_report}
+    return {"data": {"id": db_report.id}}
 
 
 @router.put("/{report_id}")

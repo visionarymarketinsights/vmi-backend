@@ -34,7 +34,6 @@ class ReportImage(Base):
     __tablename__ = "report_image"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    report_id = Column(Integer, nullable=False)
     img_name = Column(String, nullable=False)
     img_file = Column(String, nullable=False)
 
