@@ -1,13 +1,16 @@
+from typing import List
 from fastapi import Depends, APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Report
+from app.models import Report, ReportImage
 from app.database import get_db
 from sqlalchemy import func
 import os
 import io
 from datetime import datetime
 from PIL import Image
+
+from app.routers.report_image import CreateReportImageRequest, UpdateReportImageRequest
 
 router = APIRouter()
 
@@ -28,6 +31,11 @@ class CreateReportRequest(BaseModel):
     created_date: str
 
 
+class CreateReportWithImagesRequest(BaseModel):
+    report: CreateReportRequest
+    images: List[CreateReportImageRequest]
+
+
 class UpdateReportRequest(BaseModel):
     id: int
     title: str
@@ -43,8 +51,6 @@ class UpdateReportRequest(BaseModel):
     meta_keyword: str
     pages: str
     created_date: str
-
-
 class ReportListSchema(BaseModel):
     id: int
     title: str
@@ -132,13 +138,21 @@ async def get_reports_by_category(
     return {"data": report_list}
 
 @router.post("/")
-async def create_report(report: CreateReportRequest, db: Session = Depends(get_db)):
-    db_report = Report(**report.dict())
+async def create_report(report: CreateReportWithImagesRequest, db: Session = Depends(get_db)):
+    db_report = Report(**report.report.dict())
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
-    return {"data": {"id": db_report.id}}
 
+    
+    for image in report.images:
+        image.img_name = image.img_name.replace("XXX", str(db_report.id))
+        new_image = ReportImage(**image.dict())
+        db.add(new_image)
+        db.commit()
+        db.refresh(new_image)
+
+    return {"data": "Report Added Successfully"}
 
 @router.put("/{report_id}")
 async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
@@ -151,6 +165,7 @@ async def update_report(new_report: UpdateReportRequest, db: Session = Depends(g
 
     db.commit()
     db.refresh(existing_report)
+
     return {"data": existing_report}
 
 

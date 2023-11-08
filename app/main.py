@@ -45,7 +45,7 @@ async def root():
 
 
 app.include_router(report.router, prefix="/reports", tags=["Report"])
-app.include_router(report_image.router, prefix="/report-images", tags=["Report Image"]) 
+app.include_router(report_image.router, prefix="/report_images", tags=["Report Image"]) 
 app.include_router(press_release.router, prefix="/press_release", tags=["Press Release"]) 
 app.include_router(email.router, tags=["Email"])
 
