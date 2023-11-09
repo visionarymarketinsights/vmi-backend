@@ -51,6 +51,7 @@ class UpdateReportRequest(BaseModel):
     meta_keyword: str
     pages: str
     created_date: str
+    
 class ReportListSchema(BaseModel):
     id: int
     title: str

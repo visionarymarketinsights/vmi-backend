@@ -42,7 +42,11 @@ class PressRelease(Base):
     __tablename__ = "press_release"
 
     id = Column(Integer, primary_key=True, nullable=False)
+    title = Column(String, nullable=False)
     category = Column(String, nullable=False)
     description = Column(String, nullable=False)
     summary = Column(String, nullable=False)
+    meta_title = Column(String)
+    meta_desc = Column(String)
+    meta_keyword = Column(String)
     created_date = Column(String)
