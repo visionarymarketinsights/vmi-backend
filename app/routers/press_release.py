@@ -13,10 +13,10 @@ class CreatePressReleaseRequest(BaseModel):
     description: str
     summary: str
     title: str
-    meta_title:str
-    meta_desc:str
-    meta_keyword:str
-    created_date:str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
+    created_date: str
 
 
 class UpdatePressReleaseRequest(BaseModel):
@@ -25,17 +25,18 @@ class UpdatePressReleaseRequest(BaseModel):
     description: str
     summary: str
     title: str
-    meta_title:str
-    meta_desc:str
-    meta_keyword:str
-    created_date:str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
+    created_date: str
 
 
 class PressReleaseListSchema(BaseModel):
     id: int
-    category: str
     title: str
+    category: str
     summary: str
+    created_date: str
 
 
 @router.get("/")
@@ -52,12 +53,13 @@ async def get_press_releases(db: Session = Depends(get_db)):
     )
     press_release_list = [
         PressReleaseListSchema(
-            id=release.id,
-            category=release.category,
-            summary=release.summary,
-            title=release.title,
+            id=press_release.id,
+            title=press_release.title,
+            category=press_release.category,
+            summary=press_release.summary,
+            created_date=press_release.created_date,
         )
-        for release in press_releases
+        for press_release in press_releases
     ]
     return {"data": press_release_list}
 
@@ -71,6 +73,64 @@ async def get_press_release_category_count(db: Session = Depends(get_db)):
     )
     result = [{"category": category, "count": count} for category, count in query]
     return {"data": result}
+
+
+@router.get("/category/{category}")
+async def get_press_release_by_category(
+    category: str,
+    page: int,
+    per_page: int,
+    db: Session = Depends(get_db),
+):
+    if category is None:
+        offset = (page - 1) * per_page
+
+        press_releases = (
+            # db.query(Report)
+            db.query(PressRelease)
+            .with_entities(
+                PressRelease.id,
+                PressRelease.category,
+                PressRelease.summary,
+                PressRelease.title,
+                PressRelease.created_date,
+            )
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        )
+    else:
+        # Calculate the offset to skip records based on the page and per_page values
+        offset = (page - 1) * per_page
+
+        press_releases = (
+            # db.query(Report)
+            db.query(PressRelease)
+            .with_entities(
+                PressRelease.id,
+                PressRelease.category,
+                PressRelease.summary,
+                PressRelease.title,
+                PressRelease.created_date,
+            )
+            .filter(PressRelease.category == category)
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        )
+
+    press_release_list = [
+        PressReleaseListSchema(
+            id=press_release.id,
+            title=press_release.title,
+            category=press_release.category,
+            summary=press_release.summary,
+            created_date=press_release.created_date,
+        )
+        for press_release in press_releases
+    ]
+
+    return {"data": press_release_list}
 
 
 @router.get("/{press_release_id}")
