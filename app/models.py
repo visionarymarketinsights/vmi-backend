@@ -14,6 +14,7 @@ class Report(Base):
     toc = Column(String)
     highlights = Column(String)
     methodology = Column(String)
+    faqs = Column(String)
     meta_title = Column(String)
     meta_desc = Column(String)
     meta_keyword = Column(String)

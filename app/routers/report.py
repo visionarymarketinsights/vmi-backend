@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Report, ReportImage
 from app.database import get_db
-from sqlalchemy import func
+from sqlalchemy import DateTime, desc, func, or_
 import os
 import io
 from datetime import datetime
@@ -29,6 +29,7 @@ class CreateReportRequest(BaseModel):
     meta_keyword: str
     pages: str
     created_date: str
+    faqs: str
 
 
 class CreateReportWithImagesRequest(BaseModel):
@@ -51,7 +52,9 @@ class UpdateReportRequest(BaseModel):
     meta_keyword: str
     pages: str
     created_date: str
-    
+    faqs: str
+
+
 class ReportListSchema(BaseModel):
     id: int
     title: str
@@ -69,14 +72,23 @@ class CategoryReportListSchema(BaseModel):
     pages: str
     created_date: str
 
-
 @router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
-        db.query(Report).with_entities(Report.id, Report.url, Report.category, Report.summary,Report.title).all()
+        db.query(Report)
+        .with_entities(
+            Report.id, Report.url, Report.category, Report.summary, Report.title
+        )
+        .all()
     )
     report_list = [
-        ReportListSchema(id=report.id, url=report.url, category=report.category, summary=report.summary, title=report.title)
+        ReportListSchema(
+            id=report.id,
+            url=report.url,
+            category=report.category,
+            summary=report.summary,
+            title=report.title,
+        )
         for report in reports
     ]
     return {"data": report_list}
@@ -91,6 +103,94 @@ async def get_category_count(db: Session = Depends(get_db)):
     )
     result = [{"category": category, "count": count} for category, count in query]
     return {"data": result}
+
+
+
+@router.get("/latest")
+async def get_latest_reports(
+    page: int,
+    per_page: int,
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * per_page
+
+    reports = (
+        # db.query(Report)
+        db.query(Report)
+        .with_entities(
+            Report.id,
+            Report.url,
+            Report.category,
+            Report.summary,
+            Report.title,
+            Report.pages,
+            Report.created_date,
+        )
+        .order_by(func.cast(Report.created_date, DateTime).desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    report_list = [
+        CategoryReportListSchema(
+            id=report.id,
+            url=report.url,
+            title=report.title,
+            category=report.category,
+            summary=report.summary,
+            pages=report.pages,
+            created_date=report.created_date,
+            # description=report.description,
+        )
+        for report in reports
+    ]
+
+    return {"data": report_list}
+
+@router.get("/search")
+async def get_searched_reports(
+    page: int,
+    per_page: int,
+    keyword: str,
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * per_page
+
+    reports = (
+        # db.query(Report)
+        db.query(Report)
+        .with_entities(
+            Report.id,
+            Report.url,
+            Report.category,
+            Report.summary,
+            Report.title,
+            Report.pages,
+            Report.created_date,
+        )
+        .filter(or_(Report.title.ilike(f'%{keyword}%')))
+        .order_by(func.cast(Report.created_date, DateTime).desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    report_list = [
+        CategoryReportListSchema(
+            id=report.id,
+            url=report.url,
+            title=report.title,
+            category=report.category,
+            summary=report.summary,
+            pages=report.pages,
+            created_date=report.created_date,
+            # description=report.description,
+        )
+        for report in reports
+    ]
+
+    return {"data": report_list}
 
 
 @router.get("/{report_id}")
@@ -115,7 +215,15 @@ async def get_reports_by_category(
     reports = (
         # db.query(Report)
         db.query(Report)
-        .with_entities(Report.id, Report.url, Report.category, Report.summary,Report.title, Report.pages, Report.created_date)
+        .with_entities(
+            Report.id,
+            Report.url,
+            Report.category,
+            Report.summary,
+            Report.title,
+            Report.pages,
+            Report.created_date,
+        )
         .filter(Report.category == category)
         .offset(offset)
         .limit(per_page)
@@ -138,14 +246,16 @@ async def get_reports_by_category(
 
     return {"data": report_list}
 
+
 @router.post("/")
-async def create_report(report: CreateReportWithImagesRequest, db: Session = Depends(get_db)):
+async def create_report(
+    report: CreateReportWithImagesRequest, db: Session = Depends(get_db)
+):
     db_report = Report(**report.report.dict())
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
 
-    
     for image in report.images:
         image.img_name = image.img_name.replace("XXX", str(db_report.id))
         new_image = ReportImage(**image.dict())
@@ -154,6 +264,7 @@ async def create_report(report: CreateReportWithImagesRequest, db: Session = Dep
         db.refresh(new_image)
 
     return {"data": "Report Added Successfully"}
+
 
 @router.put("/{report_id}")
 async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
@@ -179,6 +290,7 @@ async def delete_report(report_id: int, db: Session = Depends(get_db)):
     db.delete(report)
     db.commit()
     return {"message": "Report deleted"}
+
 
 @router.post("/upload")
 def upload(file: UploadFile = File(...)):

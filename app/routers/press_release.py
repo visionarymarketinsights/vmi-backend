@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import PressRelease
 from app.database import get_db
-from sqlalchemy import func
+from sqlalchemy import DateTime, func
 
 router = APIRouter()
 
@@ -73,6 +73,43 @@ async def get_press_release_category_count(db: Session = Depends(get_db)):
     )
     result = [{"category": category, "count": count} for category, count in query]
     return {"data": result}
+
+
+@router.get("/latest")
+async def get_latest_reports(
+    page: int,
+    per_page: int,
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * per_page
+
+    press_releases = (
+        db.query(PressRelease)
+        .with_entities(
+            PressRelease.id,
+            PressRelease.category,
+            PressRelease.summary,
+            PressRelease.title,
+            PressRelease.created_date,
+        )
+        .order_by(func.cast(PressRelease.created_date, DateTime).desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    press_release_list = [
+        PressReleaseListSchema(
+            id=press_release.id,
+            title=press_release.title,
+            category=press_release.category,
+            summary=press_release.summary,
+            created_date=press_release.created_date,
+        )
+        for press_release in press_releases
+    ]
+
+    return {"data": press_release_list}
 
 
 @router.get("/category/{category}")
