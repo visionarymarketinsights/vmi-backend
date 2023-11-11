@@ -48,6 +48,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
             PressRelease.category,
             PressRelease.summary,
             PressRelease.title,
+            PressRelease.created_date,
         )
         .all()
     )
@@ -57,7 +58,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
             title=press_release.title,
             category=press_release.category,
             summary=press_release.summary,
-            created_date=press_release.created_date,
+            created_date=press_release.created_date
         )
         for press_release in press_releases
     ]
