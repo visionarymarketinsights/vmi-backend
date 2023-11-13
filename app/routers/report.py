@@ -243,6 +243,7 @@ async def get_reports_by_category(
             Report.created_date,
         )
         .filter(Report.category == category)
+        .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
         .limit(per_page)
         .all()
@@ -284,22 +285,22 @@ async def create_report(
     return {"data": "Report Added Successfully"}
 
 
-@router.put("/cover/{report_id}")
-async def update_cover(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
-    existing_report = db.query(Report).filter(Report.id == new_report.id).first()
-    if existing_report is None:
-        raise HTTPException(status_code=404, detail="Report not found")
+# @router.put("/cover/{report_id}")
+# async def update_cover(new_report: UpdateCoverRequest, db: Session = Depends(get_db)):
+#     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
+#     if existing_report is None:
+#         raise HTTPException(status_code=404, detail="Report not found")
 
-    for attr, value in new_report.dict().items():
-        setattr(existing_report, attr, value)
+#     for attr, value in new_report.dict().items():
+#         setattr(existing_report, attr, value)
 
-    db.commit()
-    db.refresh(existing_report)
+#     db.commit()
+#     db.refresh(existing_report)
 
-    return {"data": existing_report}
+#     return {"data": existing_report}
 
 @router.put("/{report_id}")
-async def update_report(new_report: UpdateCoverRequest, db: Session = Depends(get_db)):
+async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
     if existing_report is None:
         raise HTTPException(status_code=404, detail="Report not found")

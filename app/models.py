@@ -45,10 +45,13 @@ class PressRelease(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False)
+    url = Column(String, nullable=False)
     category = Column(String, nullable=False)
     description = Column(String, nullable=False)
+    report_id = Column(Integer)
     summary = Column(String, nullable=False)
     meta_title = Column(String)
     meta_desc = Column(String)
     meta_keyword = Column(String)
+    cover_img = Column(String)
     created_date = Column(String)

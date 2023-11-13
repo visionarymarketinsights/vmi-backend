@@ -16,6 +16,9 @@ class CreatePressReleaseRequest(BaseModel):
     meta_title: str
     meta_desc: str
     meta_keyword: str
+    report_id: int
+    url: str
+    cover_img: str
     created_date: str
 
 
@@ -28,6 +31,9 @@ class UpdatePressReleaseRequest(BaseModel):
     meta_title: str
     meta_desc: str
     meta_keyword: str
+    report_id: int
+    url: str
+    cover_img: str
     created_date: str
 
 
@@ -37,6 +43,8 @@ class PressReleaseListSchema(BaseModel):
     category: str
     summary: str
     created_date: str
+    url: str
+    cover_img: str
 
 
 @router.get("/")
@@ -49,6 +57,8 @@ async def get_press_releases(db: Session = Depends(get_db)):
             PressRelease.summary,
             PressRelease.title,
             PressRelease.created_date,
+            PressRelease.url,
+            PressRelease.cover_img,
         )
         .all()
     )
@@ -58,7 +68,9 @@ async def get_press_releases(db: Session = Depends(get_db)):
             title=press_release.title,
             category=press_release.category,
             summary=press_release.summary,
-            created_date=press_release.created_date
+            created_date=press_release.created_date,
+            url=press_release.url,
+            cover_img=press_release.cover_img,
         )
         for press_release in press_releases
     ]
@@ -91,6 +103,8 @@ async def get_latest_reports(
             PressRelease.category,
             PressRelease.summary,
             PressRelease.title,
+            PressRelease.url,
+            PressRelease.cover_img,
             PressRelease.created_date,
         )
         .order_by(func.cast(PressRelease.created_date, DateTime).desc())
@@ -105,6 +119,8 @@ async def get_latest_reports(
             title=press_release.title,
             category=press_release.category,
             summary=press_release.summary,
+            url=press_release.url,
+            cover_img=press_release.cover_img,
             created_date=press_release.created_date,
         )
         for press_release in press_releases
@@ -131,6 +147,8 @@ async def get_press_release_by_category(
                 PressRelease.category,
                 PressRelease.summary,
                 PressRelease.title,
+                PressRelease.url,
+                PressRelease.cover_img,
                 PressRelease.created_date,
             )
             .offset(offset)
@@ -149,6 +167,8 @@ async def get_press_release_by_category(
                 PressRelease.category,
                 PressRelease.summary,
                 PressRelease.title,
+                PressRelease.url,
+                PressRelease.cover_img,
                 PressRelease.created_date,
             )
             .filter(PressRelease.category == category)
@@ -163,6 +183,8 @@ async def get_press_release_by_category(
             title=press_release.title,
             category=press_release.category,
             summary=press_release.summary,
+            url=press_release.url,
+            cover_img=press_release.cover_img,
             created_date=press_release.created_date,
         )
         for press_release in press_releases
