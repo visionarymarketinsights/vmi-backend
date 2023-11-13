@@ -28,6 +28,7 @@ class CreateReportRequest(BaseModel):
     meta_desc: str
     meta_keyword: str
     pages: str
+    cover_img: str
     created_date: str
     faqs: str
 
@@ -51,9 +52,14 @@ class UpdateReportRequest(BaseModel):
     meta_desc: str
     meta_keyword: str
     pages: str
+    cover_img: str
     created_date: str
     faqs: str
-
+    
+class UpdateCoverRequest(BaseModel):
+    id: int
+    cover_img: str
+    
 
 class ReportListSchema(BaseModel):
     id: int
@@ -70,6 +76,16 @@ class CategoryReportListSchema(BaseModel):
     title: str
     summary: str
     pages: str
+    created_date: str
+    
+class LatestReportListSchema(BaseModel):
+    id: int
+    url: str
+    category: str
+    title: str
+    summary: str
+    pages: str
+    cover_img: str
     created_date: str
 
 @router.get("/")
@@ -124,6 +140,7 @@ async def get_latest_reports(
             Report.summary,
             Report.title,
             Report.pages,
+            Report.cover_img,
             Report.created_date,
         )
         .order_by(func.cast(Report.created_date, DateTime).desc())
@@ -133,13 +150,14 @@ async def get_latest_reports(
     )
 
     report_list = [
-        CategoryReportListSchema(
+        LatestReportListSchema(
             id=report.id,
             url=report.url,
             title=report.title,
             category=report.category,
             summary=report.summary,
             pages=report.pages,
+            cover_img=report.cover_img,
             created_date=report.created_date,
             # description=report.description,
         )
@@ -266,8 +284,22 @@ async def create_report(
     return {"data": "Report Added Successfully"}
 
 
+@router.put("/cover/{report_id}")
+async def update_cover(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
+    existing_report = db.query(Report).filter(Report.id == new_report.id).first()
+    if existing_report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    for attr, value in new_report.dict().items():
+        setattr(existing_report, attr, value)
+
+    db.commit()
+    db.refresh(existing_report)
+
+    return {"data": existing_report}
+
 @router.put("/{report_id}")
-async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
+async def update_report(new_report: UpdateCoverRequest, db: Session = Depends(get_db)):
     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
     if existing_report is None:
         raise HTTPException(status_code=404, detail="Report not found")

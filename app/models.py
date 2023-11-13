@@ -19,6 +19,7 @@ class Report(Base):
     meta_desc = Column(String)
     meta_keyword = Column(String)
     pages = Column(String)
+    cover_img = Column(String)
     created_date = Column(String)
     
 
