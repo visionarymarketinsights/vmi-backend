@@ -31,7 +31,7 @@ router = APIRouter()
 
 
 @router.get("/check_email")
-@limiter.limit("20/minute")
+@limiter.limit("2/minute")
 def email_check(request: Request):
     return {}
 
