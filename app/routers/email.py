@@ -31,10 +31,9 @@ router = APIRouter()
 
 
 @router.get("/check_email")
-@limiter.limit("2/minute")
+@limiter.limit("5/minute")
 def email_check(request: Request):
-    return {}
-
+    return {'ip':request.client.host}
 
 @router.post("/email")
 async def email(email_request: EmailRequest):
