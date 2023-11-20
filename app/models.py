@@ -55,3 +55,10 @@ class PressRelease(Base):
     meta_keyword = Column(String)
     cover_img = Column(String)
     created_date = Column(String)
+    
+class Price(Base):
+    __tablename__ = "price"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    license = Column(String, nullable=False)
+    price = Column(String, nullable=False)
