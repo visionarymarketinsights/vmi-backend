@@ -28,6 +28,7 @@ origins = [
     "http://localhost:3000",
     "https://congruence.onrender.com",
     "https://congruence.178765.xyz",
+    "https://www.congruencemarketinsights.com",
     "https://marketresearch-production-6eeb.up.railway.app",
 ]
 
