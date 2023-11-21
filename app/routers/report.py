@@ -187,7 +187,10 @@ async def get_searched_reports(
             Report.pages,
             Report.created_date,
         )
-        .filter(or_(Report.title.ilike(f'%{keyword}%')))
+        # .filter(or_(Report.title.ilike(f'%{keyword}%')))
+        # .filter(func.to_tsvector('english', Report.title).op('@@')(func.to_tsquery('english', keyword)))
+        .filter(func.to_tsvector('english', Report.title )\
+        .match(keyword, postgresql_regconfig='english'))
         .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
         .limit(per_page)
@@ -214,6 +217,11 @@ async def get_searched_reports(
 @router.get("/{report_id}")
 async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
+    return {"data": report}
+
+@router.get("/url/{report_url}")
+async def get_report_by_id(report_url: str, db: Session = Depends(get_db)):
+    report = db.query(Report).filter(Report.url == report_url).first()
     return {"data": report}
 
 
