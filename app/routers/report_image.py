@@ -16,6 +16,7 @@ class GetReportImage(BaseModel):
 class CreateReportImageRequest(BaseModel):
     img_name: str
     img_file: str
+    
 class UpdateReportImageRequest(BaseModel):
     id: int
     img_img: str

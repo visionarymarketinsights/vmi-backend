@@ -2,7 +2,7 @@ from typing import List
 from fastapi import Depends, APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Report, ReportImage
+from app.models import Category, Report, ReportImage
 from app.database import get_db
 from sqlalchemy import DateTime, desc, func, or_
 import os
@@ -15,95 +15,90 @@ from app.routers.report_image import CreateReportImageRequest, UpdateReportImage
 router = APIRouter()
 
 
-class CreateReportRequest(BaseModel):
+class CreateReport(BaseModel):
     title: str
     url: str
-    category: str
-    description: str
+    category_id: int
     summary: str
+    description: str
     toc: str
     highlights: str
-    methodology: str
+    faqs: str
     meta_title: str
     meta_desc: str
     meta_keyword: str
     pages: str
     cover_img: str
     created_date: str
-    faqs: str
 
 
-class CreateReportWithImagesRequest(BaseModel):
-    report: CreateReportRequest
+class CreateReportWithImages(BaseModel):
+    report: CreateReport
     images: List[CreateReportImageRequest]
 
 
-class UpdateReportRequest(BaseModel):
+class UpdateReport(BaseModel):
     id: int
     title: str
     url: str
-    category: str
-    description: str
+    category_id: int
     summary: str
+    description: str
     toc: str
     highlights: str
-    methodology: str
+    faqs: str
     meta_title: str
     meta_desc: str
     meta_keyword: str
     pages: str
     cover_img: str
     created_date: str
-    faqs: str
-    
-class UpdateCoverRequest(BaseModel):
-    id: int
-    cover_img: str
-    
-
-class ReportListSchema(BaseModel):
-    id: int
-    title: str
-    url: str
-    category: str
-    summary: str
 
 
-class CategoryReportListSchema(BaseModel):
+class GetReport(BaseModel):
     id: int
     url: str
-    category: str
-    title: str
-    summary: str
-    pages: str
-    created_date: str
-    
-class LatestReportListSchema(BaseModel):
-    id: int
-    url: str
-    category: str
+    category_id: int
+    category_name: str
+    category_url: str
     title: str
     summary: str
     pages: str
     cover_img: str
     created_date: str
+
 
 @router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
         db.query(Report)
+        .join(Category, Report.category_id == Category.id)
         .with_entities(
-            Report.id, Report.url, Report.category, Report.summary, Report.title
+            Report.id,
+            Report.url,
+            Report.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
+            Report.title,
+            Report.summary,
+            Report.pages,
+            Report.cover_img,
+            Report.created_date,
         )
         .all()
     )
     report_list = [
-        ReportListSchema(
+        GetReport(
             id=report.id,
             url=report.url,
-            category=report.category,
+            category_id=report.category_id,
+            category_url=report.category_url,
+            category_name=report.category_name,
             summary=report.summary,
             title=report.title,
+            cover_img=report.cover_img,
+            pages=report.pages,
+            created_date=report.created_date,
         )
         for report in reports
     ]
@@ -113,13 +108,13 @@ async def get_reports(db: Session = Depends(get_db)):
 @router.get("/category/category_count")
 async def get_category_count(db: Session = Depends(get_db)):
     query = (
-        db.query(Report.category, func.count(Report.category))
-        .group_by(Report.category)
+        db.query(Category.name, func.count(Report.category_id))
+        .join(Report, Category.id == Report.category_id)
+        .group_by(Category.name)
         .all()
     )
     result = [{"category": category, "count": count} for category, count in query]
     return {"data": result}
-
 
 
 @router.get("/latest")
@@ -131,12 +126,14 @@ async def get_latest_reports(
     offset = (page - 1) * per_page
 
     reports = (
-        # db.query(Report)
         db.query(Report)
+        .join(Category, Report.category_id == Category.id)
         .with_entities(
             Report.id,
             Report.url,
-            Report.category,
+            Report.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
             Report.summary,
             Report.title,
             Report.pages,
@@ -150,21 +147,23 @@ async def get_latest_reports(
     )
 
     report_list = [
-        LatestReportListSchema(
+        GetReport(
             id=report.id,
             url=report.url,
             title=report.title,
-            category=report.category,
+            category_id=report.category_id,
+            category_name=report.category_name,
+            category_url=report.category_url,
             summary=report.summary,
             pages=report.pages,
             cover_img=report.cover_img,
             created_date=report.created_date,
-            # description=report.description,
         )
         for report in reports
     ]
 
     return {"data": report_list}
+
 
 @router.get("/search")
 async def get_searched_reports(
@@ -178,19 +177,24 @@ async def get_searched_reports(
     reports = (
         # db.query(Report)
         db.query(Report)
+        .join(Category, Category.id == Report.category_id)
         .with_entities(
             Report.id,
             Report.url,
-            Report.category,
+            Report.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
             Report.summary,
             Report.title,
             Report.pages,
+            Report.cover_img,
             Report.created_date,
         )
-        # .filter(or_(Report.title.ilike(f'%{keyword}%')))
-        # .filter(func.to_tsvector('english', Report.title).op('@@')(func.to_tsquery('english', keyword)))
-        .filter(func.to_tsvector('english', Report.title )\
-        .match(keyword, postgresql_regconfig='english'))
+        .filter(
+            func.to_tsvector("english", Report.title).match(
+                keyword, postgresql_regconfig="english"
+            )
+        )
         .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
         .limit(per_page)
@@ -198,15 +202,17 @@ async def get_searched_reports(
     )
 
     report_list = [
-        CategoryReportListSchema(
+        GetReport(
             id=report.id,
             url=report.url,
             title=report.title,
-            category=report.category,
+            category_id=report.category_id,
+            category_name=report.category_name,
+            category_url=report.category_url,
             summary=report.summary,
             pages=report.pages,
+            cover_img=report.cover_img,
             created_date=report.created_date,
-            # description=report.description,
         )
         for report in reports
     ]
@@ -219,20 +225,21 @@ async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     return {"data": report}
 
+
 @router.get("/url/{report_url}")
 async def get_report_by_id(report_url: str, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.url == report_url).first()
     return {"data": report}
 
 
-@router.get("/category/{category}")
+@router.get("/category/{category_id}")
 async def get_reports_by_category(
-    category: str,
+    category_id: int,
     page: int,
     per_page: int,
     db: Session = Depends(get_db),
 ):
-    if category is None:
+    if category_id is None:
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Calculate the offset to skip records based on the page and per_page values
@@ -241,16 +248,20 @@ async def get_reports_by_category(
     reports = (
         # db.query(Report)
         db.query(Report)
+        .join(Category, Report.category_id == Category.id)
         .with_entities(
             Report.id,
             Report.url,
-            Report.category,
+            Report.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
             Report.summary,
             Report.title,
             Report.pages,
+            Report.cover_img,
             Report.created_date,
         )
-        .filter(Report.category == category)
+        .filter(Report.category_id == category_id)
         .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
         .limit(per_page)
@@ -258,15 +269,17 @@ async def get_reports_by_category(
     )
 
     report_list = [
-        CategoryReportListSchema(
+        GetReport(
             id=report.id,
             url=report.url,
             title=report.title,
-            category=report.category,
+            category_id=report.category_id,
+            category_name=report.category_name,
+            category_url=report.category_url,
             summary=report.summary,
             pages=report.pages,
+            cover_img=report.cover_img,
             created_date=report.created_date,
-            # description=report.description,
         )
         for report in reports
     ]
@@ -275,9 +288,7 @@ async def get_reports_by_category(
 
 
 @router.post("/")
-async def create_report(
-    report: CreateReportWithImagesRequest, db: Session = Depends(get_db)
-):
+async def create_report(report: CreateReportWithImages, db: Session = Depends(get_db)):
     db_report = Report(**report.report.dict())
     db.add(db_report)
     db.commit()
@@ -293,22 +304,8 @@ async def create_report(
     return {"data": "Report Added Successfully"}
 
 
-# @router.put("/cover/{report_id}")
-# async def update_cover(new_report: UpdateCoverRequest, db: Session = Depends(get_db)):
-#     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
-#     if existing_report is None:
-#         raise HTTPException(status_code=404, detail="Report not found")
-
-#     for attr, value in new_report.dict().items():
-#         setattr(existing_report, attr, value)
-
-#     db.commit()
-#     db.refresh(existing_report)
-
-#     return {"data": existing_report}
-
 @router.put("/{report_id}")
-async def update_report(new_report: UpdateReportRequest, db: Session = Depends(get_db)):
+async def update_report(new_report: UpdateReport, db: Session = Depends(get_db)):
     existing_report = db.query(Report).filter(Report.id == new_report.id).first()
     if existing_report is None:
         raise HTTPException(status_code=404, detail="Report not found")

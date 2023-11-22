@@ -8,12 +8,11 @@ class Report(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False, unique=True)
     url = Column(String, nullable=False, unique=True)
-    category = Column(String, nullable=False)
+    category_id = Column(Integer, nullable=False)
     summary = Column(String)
     description = Column(String)
     toc = Column(String)
     highlights = Column(String)
-    methodology = Column(String)
     faqs = Column(String)
     meta_title = Column(String)
     meta_desc = Column(String)
@@ -23,14 +22,15 @@ class Report(Base):
     created_date = Column(String)
     
 
-
 class Category(Base):
     __tablename__ = "category"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    abr = Column(String, nullable=False, unique=True)
-    name = Column(String, nullable=False, unique=True)
-    icon = Column(String, nullable=False)
+    abr = Column(String)
+    name = Column(String)
+    url = Column(String, nullable=False, unique=True)
+    icon = Column(String)
+    back_cover = Column(String)
 
 
 class ReportImage(Base):
@@ -44,12 +44,12 @@ class PressRelease(Base):
     __tablename__ = "press_release"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    title = Column(String, nullable=False)
+    title = Column(String)
     url = Column(String, nullable=False)
-    category = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    category_id = Column(Integer, nullable=False)
+    description = Column(String)
     report_id = Column(Integer)
-    summary = Column(String, nullable=False)
+    summary = Column(String)
     meta_title = Column(String)
     meta_desc = Column(String)
     meta_keyword = Column(String)
