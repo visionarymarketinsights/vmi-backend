@@ -43,6 +43,7 @@ class GetPressRelease(BaseModel):
     category_id: int
     category_url: str
     category_name: str
+    category_abr: str
     summary: str
     created_date: str
     url: str
@@ -58,6 +59,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
             PressRelease.id,
             PressRelease.category_id,
             Category.url.label("category_url"),
+            Category.abr.label("category_abr"),
             Category.name.label("category_name"),
             PressRelease.summary,
             PressRelease.title,
@@ -74,6 +76,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
             category_id=press_release.category_id,
             category_name=press_release.category_name,
             category_url=press_release.category_url,
+            category_abr=press_release.category_abr,
             summary=press_release.summary,
             created_date=press_release.created_date,
             url=press_release.url,
@@ -87,12 +90,31 @@ async def get_press_releases(db: Session = Depends(get_db)):
 @router.get("/category/category_count")
 async def get_press_release_category_count(db: Session = Depends(get_db)):
     query = (
-        db.query(Category.name, func.count(PressRelease.category_id))
+        db.query(
+            Category.id.label("category_id"),
+            Category.url.label("category_url"),
+            Category.abr.label("category_abr"),
+            Category.name.label("category_name"),
+            Category.back_cover.label("category_back_cover"),
+            Category.icon.label("category_icon"),
+            func.count(PressRelease.category_id).label("count"),
+        )
         .join(Category, PressRelease.category_id == Category.id)
-        .group_by(Category.name)
+        .group_by(Category.id)
         .all()
     )
-    result = [{"category": category, "count": count} for category, count in query]
+    result = [
+        {
+            "category_id": category_id,
+            "category_url": category_url,
+            "category_abr": category_abr,
+            "category_name": category_name,
+            "category_back_cover": category_back_cover,
+            "category_icon": category_icon,
+            "count": count,
+        }
+        for category_id, category_url, category_abr, category_name, category_back_cover, category_icon, count in query
+    ]
     return {"data": result}
 
 
@@ -112,6 +134,7 @@ async def get_latest_reports(
             PressRelease.category_id,
             Category.url.label("category_url"),
             Category.name.label("category_name"),
+            Category.abr.label("category_abr"),
             PressRelease.summary,
             PressRelease.title,
             PressRelease.created_date,
@@ -127,11 +150,12 @@ async def get_latest_reports(
     press_release_list = [
         GetPressRelease(
             id=press_release.id,
-            title=press_release.title,
             category_id=press_release.category_id,
-            category_name=press_release.category_name,
             category_url=press_release.category_url,
+            category_name=press_release.category_name,
+            category_abr=press_release.category_abr,
             summary=press_release.summary,
+            title=press_release.title,
             created_date=press_release.created_date,
             url=press_release.url,
             cover_img=press_release.cover_img,
@@ -142,9 +166,9 @@ async def get_latest_reports(
     return {"data": press_release_list}
 
 
-@router.get("/category/{category}")
-async def get_press_release_by_category(
-    category_id: int,
+@router.get("/category/{category_url}")
+async def get_press_release_by_category_url(
+    category_url: str,
     page: int,
     per_page: int,
     db: Session = Depends(get_db),
@@ -158,6 +182,7 @@ async def get_press_release_by_category(
         .with_entities(
             PressRelease.id,
             PressRelease.category_id,
+            Category.abr.label("category_abr"),
             Category.url.label("category_url"),
             Category.name.label("category_name"),
             PressRelease.summary,
@@ -166,7 +191,7 @@ async def get_press_release_by_category(
             PressRelease.url,
             PressRelease.cover_img,
         )
-        .filter(PressRelease.category_id == category_id)
+        .filter(Category.url == category_url)
         .offset(offset)
         .limit(per_page)
         .all()
@@ -179,6 +204,7 @@ async def get_press_release_by_category(
             category_id=press_release.category_id,
             category_name=press_release.category_name,
             category_url=press_release.category_url,
+            category_abr=press_release.category_abr,
             summary=press_release.summary,
             created_date=press_release.created_date,
             url=press_release.url,
@@ -196,6 +222,25 @@ async def get_press_release_by_id(press_release_id: int, db: Session = Depends(g
         db.query(PressRelease).filter(PressRelease.id == press_release_id).first()
     )
     return {"data": press_release}
+
+
+# @router.get("/url/{press_release_url}")
+# async def get_press_release_by_url(
+#     press_release_url: int, db: Session = Depends(get_db)
+# ):
+#     press_release = (
+#         db.query(PressRelease, Category.name)
+#         .join(Category, PressRelease.category_id == Category.id)
+#         .filter(PressRelease.url == press_release_url)
+#         .first()
+#     )
+#     if press_release:
+#         press_release_data, category_name = press_release
+#         press_release_data_dict = dict(press_release_data.__dict__)
+#         press_release_data_dict["category_name"] = category_name
+#         return {"data": press_release_data_dict}
+#     else:
+#         return {"data": None}
 
 
 @router.post("/")

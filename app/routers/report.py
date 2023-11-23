@@ -108,12 +108,31 @@ async def get_reports(db: Session = Depends(get_db)):
 @router.get("/category/category_count")
 async def get_category_count(db: Session = Depends(get_db)):
     query = (
-        db.query(Category.name, func.count(Report.category_id))
+        db.query(
+            Category.id.label("category_id"),
+            Category.url.label("category_url"),
+            Category.abr.label("category_abr"),
+            Category.name.label("category_name"),
+            Category.back_cover.label("category_back_cover"),
+            Category.icon.label("category_icon"),
+            func.count(Report.category_id).label("count"),
+        )
         .join(Report, Category.id == Report.category_id)
-        .group_by(Category.name)
+        .group_by(Category.id)
         .all()
     )
-    result = [{"category": category, "count": count} for category, count in query]
+    result = [
+        {
+            "category_id": category_id,
+            "category_url": category_url,
+            "category_abr": category_abr,
+            "category_name": category_name,
+            "category_back_cover": category_back_cover,
+            "category_icon": category_icon,
+            "count": count,
+        }
+        for category_id, category_url, category_abr, category_name, category_back_cover, category_icon, count in query
+    ]
     return {"data": result}
 
 
@@ -232,14 +251,14 @@ async def get_report_by_id(report_url: str, db: Session = Depends(get_db)):
     return {"data": report}
 
 
-@router.get("/category/{category_id}")
+@router.get("/category/{category_url}")
 async def get_reports_by_category(
-    category_id: int,
+    category_url: str,
     page: int,
     per_page: int,
     db: Session = Depends(get_db),
 ):
-    if category_id is None:
+    if category_url is None:
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Calculate the offset to skip records based on the page and per_page values
@@ -261,7 +280,7 @@ async def get_reports_by_category(
             Report.cover_img,
             Report.created_date,
         )
-        .filter(Report.category_id == category_id)
+        .filter(Category.url == category_url)
         .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
         .limit(per_page)
