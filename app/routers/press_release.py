@@ -24,7 +24,7 @@ class CreatePressReleaseRequest(BaseModel):
 
 class UpdatePressReleaseRequest(BaseModel):
     id: int
-    category_int: int
+    category_id: int
     description: str
     summary: str
     title: str
@@ -39,7 +39,28 @@ class UpdatePressReleaseRequest(BaseModel):
 
 class GetPressRelease(BaseModel):
     id: int
+    report_id: int
     title: str
+    category_id: int
+    category_url: str
+    category_name: str
+    category_abr: str
+    summary: str
+    created_date: str
+    url: str
+    cover_img: str
+    
+class GetLatestPressRelease(BaseModel):
+    summary: str
+    created_date: str
+    url: str
+    cover_img: str
+    
+class GetPressReleaseByUrl(BaseModel):
+    id: int
+    report_id: int
+    title: str
+    description: str
     category_id: int
     category_url: str
     category_name: str
@@ -58,6 +79,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
         .with_entities(
             PressRelease.id,
             PressRelease.category_id,
+            PressRelease.report_id,
             Category.url.label("category_url"),
             Category.abr.label("category_abr"),
             Category.name.label("category_name"),
@@ -73,6 +95,7 @@ async def get_press_releases(db: Session = Depends(get_db)):
         GetPressRelease(
             id=press_release.id,
             title=press_release.title,
+            report_id=press_release.report_id,
             category_id=press_release.category_id,
             category_name=press_release.category_name,
             category_url=press_release.category_url,
@@ -128,15 +151,8 @@ async def get_latest_reports(
 
     press_releases = (
         db.query(PressRelease)
-        .join(Category, PressRelease.category_id == Category.id)
         .with_entities(
-            PressRelease.id,
-            PressRelease.category_id,
-            Category.url.label("category_url"),
-            Category.name.label("category_name"),
-            Category.abr.label("category_abr"),
             PressRelease.summary,
-            PressRelease.title,
             PressRelease.created_date,
             PressRelease.url,
             PressRelease.cover_img,
@@ -148,14 +164,8 @@ async def get_latest_reports(
     )
 
     press_release_list = [
-        GetPressRelease(
-            id=press_release.id,
-            category_id=press_release.category_id,
-            category_url=press_release.category_url,
-            category_name=press_release.category_name,
-            category_abr=press_release.category_abr,
+        GetLatestPressRelease(
             summary=press_release.summary,
-            title=press_release.title,
             created_date=press_release.created_date,
             url=press_release.url,
             cover_img=press_release.cover_img,
@@ -181,6 +191,7 @@ async def get_press_release_by_category_url(
         .join(Category, PressRelease.category_id == Category.id)
         .with_entities(
             PressRelease.id,
+            PressRelease.report_id,
             PressRelease.category_id,
             Category.abr.label("category_abr"),
             Category.url.label("category_url"),
@@ -201,6 +212,7 @@ async def get_press_release_by_category_url(
         GetPressRelease(
             id=press_release.id,
             title=press_release.title,
+            report_id=press_release.report_id,
             category_id=press_release.category_id,
             category_name=press_release.category_name,
             category_url=press_release.category_url,
@@ -224,23 +236,60 @@ async def get_press_release_by_id(press_release_id: int, db: Session = Depends(g
     return {"data": press_release}
 
 
-# @router.get("/url/{press_release_url}")
-# async def get_press_release_by_url(
-#     press_release_url: int, db: Session = Depends(get_db)
-# ):
-#     press_release = (
-#         db.query(PressRelease, Category.name)
-#         .join(Category, PressRelease.category_id == Category.id)
-#         .filter(PressRelease.url == press_release_url)
-#         .first()
-#     )
-#     if press_release:
-#         press_release_data, category_name = press_release
-#         press_release_data_dict = dict(press_release_data.__dict__)
-#         press_release_data_dict["category_name"] = category_name
-#         return {"data": press_release_data_dict}
-#     else:
-#         return {"data": None}
+@router.get("/url/{press_release_url}")
+async def get_press_release_by_url(
+    press_release_url: str, db: Session = Depends(get_db)
+):
+    # press_release = (
+    #     db.query(PressRelease, Category.name)
+    #     .join(Category, PressRelease.category_id == Category.id)
+    #     .filter(PressRelease.url == press_release_url)
+    #     .first()
+    # )
+    # if press_release:
+    #     press_release_data, category_name = press_release
+    #     press_release_data_dict = dict(press_release_data.__dict__)
+    #     press_release_data_dict["category_name"] = category_name
+    #     return {"data": press_release_data_dict}
+    # else:
+    #     return {"data": None}
+
+    press_release = (
+        db.query(PressRelease)
+        .join(Category, PressRelease.category_id == Category.id)
+        .with_entities(
+            PressRelease.id,
+            PressRelease.url,
+            PressRelease.report_id,
+            PressRelease.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
+            Category.abr.label("category_abr"),
+            PressRelease.title,
+            PressRelease.summary,
+            PressRelease.description,
+            PressRelease.cover_img,
+            PressRelease.created_date,
+        )
+        .filter(PressRelease.url == press_release_url)
+        .first()
+    )
+    press_release_result = GetPressReleaseByUrl(
+            id=press_release.id,
+            url=press_release.url,
+            report_id=press_release.report_id,
+            category_id=press_release.category_id,
+            category_url=press_release.category_url,
+            category_name=press_release.category_name,
+            category_abr=press_release.category_abr,
+            summary=press_release.summary,
+            title=press_release.title,
+            cover_img=press_release.cover_img,
+            description=press_release.description,
+            created_date=press_release.created_date,
+        )
+    
+    return {"data": press_release_result}
 
 
 @router.post("/")

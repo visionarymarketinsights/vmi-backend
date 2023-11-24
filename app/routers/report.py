@@ -68,6 +68,33 @@ class GetReport(BaseModel):
     created_date: str
 
 
+class GetLatestReport(BaseModel):
+    url: str
+    summary: str
+    cover_img: str
+
+
+class GetReportByUrl(BaseModel):
+    id: int
+    title: str
+    url: str
+    category_id: int
+    category_name: str
+    category_url: str
+    category_abr: str
+    summary: str
+    description: str
+    toc: str
+    highlights: str
+    faqs: str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
+    pages: str
+    cover_img: str
+    created_date: str
+
+
 @router.get("/")
 async def get_reports(db: Session = Depends(get_db)):
     reports = (
@@ -85,6 +112,7 @@ async def get_reports(db: Session = Depends(get_db)):
             Report.cover_img,
             Report.created_date,
         )
+        .order_by(Report.id.desc())
         .all()
     )
     report_list = [
@@ -146,18 +174,10 @@ async def get_latest_reports(
 
     reports = (
         db.query(Report)
-        .join(Category, Report.category_id == Category.id)
         .with_entities(
-            Report.id,
             Report.url,
-            Report.category_id,
-            Category.name.label("category_name"),
-            Category.url.label("category_url"),
             Report.summary,
-            Report.title,
-            Report.pages,
             Report.cover_img,
-            Report.created_date,
         )
         .order_by(func.cast(Report.created_date, DateTime).desc())
         .offset(offset)
@@ -166,17 +186,10 @@ async def get_latest_reports(
     )
 
     report_list = [
-        GetReport(
-            id=report.id,
+        GetLatestReport(
             url=report.url,
-            title=report.title,
-            category_id=report.category_id,
-            category_name=report.category_name,
-            category_url=report.category_url,
             summary=report.summary,
-            pages=report.pages,
             cover_img=report.cover_img,
-            created_date=report.created_date,
         )
         for report in reports
     ]
@@ -210,8 +223,14 @@ async def get_searched_reports(
             Report.created_date,
         )
         .filter(
-            func.to_tsvector("english", Report.title).match(
-                keyword, postgresql_regconfig="english"
+            # func.to_tsvector("english", Report.title).match(
+            #     keyword, postgresql_regconfig="english"
+            # )
+            or_(
+                func.to_tsvector("english", Report.title).match(
+                    keyword, postgresql_regconfig="english"
+                ),
+                Report.title.ilike(f"%{keyword}%"),
             )
         )
         .order_by(func.cast(Report.created_date, DateTime).desc())
@@ -246,9 +265,56 @@ async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/url/{report_url}")
-async def get_report_by_id(report_url: str, db: Session = Depends(get_db)):
-    report = db.query(Report).filter(Report.url == report_url).first()
-    return {"data": report}
+async def get_report_by_url(report_url: str, db: Session = Depends(get_db)):
+    report = (
+        db.query(Report)
+        .join(Category, Category.id == Report.category_id)
+        .with_entities(
+            Report.id,
+            Report.url,
+            Report.category_id,
+            Category.name.label("category_name"),
+            Category.url.label("category_url"),
+            Category.abr.label("category_abr"),
+            Report.summary,
+            Report.title,
+            Report.pages,
+            Report.cover_img,
+            Report.created_date,
+            Report.description,
+            Report.toc,
+            Report.highlights,
+            Report.faqs,
+            Report.meta_title,
+            Report.meta_desc,
+            Report.meta_keyword,
+        )
+        .filter(Report.url == report_url)
+        .first()
+    )
+
+    get_report_data = GetReportByUrl(
+        id=report.id,
+        url=report.url,
+        title=report.title,
+        category_id=report.category_id,
+        category_name=report.category_name,
+        category_url=report.category_url,
+        category_abr=report.category_abr,
+        summary=report.summary,
+        pages=report.pages,
+        cover_img=report.cover_img,
+        created_date=report.created_date,
+        description=report.description,
+        toc=report.toc,
+        highlights=report.highlights,
+        faqs=report.faqs,
+        meta_title=report.meta_title,
+        meta_desc=report.meta_desc,
+        meta_keyword=report.meta_keyword,
+    )
+
+    return {"data": get_report_data}
 
 
 @router.get("/category/{category_url}")
