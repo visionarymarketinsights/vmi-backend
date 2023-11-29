@@ -40,7 +40,7 @@ router = APIRouter()
 
 @router.get("/")
 async def get_category(db: Session = Depends(get_db)):
-    category_list = db.query(Category).all()
+    category_list = db.query(Category).order_by(Category.name.asc()).all()
     return {"data": category_list}
 
 @router.get("/{category_id}")

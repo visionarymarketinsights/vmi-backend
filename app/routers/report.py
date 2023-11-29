@@ -147,6 +147,7 @@ async def get_category_count(db: Session = Depends(get_db)):
         )
         .join(Report, Category.id == Report.category_id)
         .group_by(Category.id)
+        .order_by(Category.name.asc())
         .all()
     )
     result = [

@@ -124,6 +124,7 @@ async def get_press_release_category_count(db: Session = Depends(get_db)):
         )
         .join(Category, PressRelease.category_id == Category.id)
         .group_by(Category.id)
+        .order_by(Category.name.asc())
         .all()
     )
     result = [
@@ -185,28 +186,52 @@ async def get_press_release_by_category_url(
 ):
     offset = (page - 1) * per_page
 
-    press_releases = (
-        # db.query(Report)
-        db.query(PressRelease)
-        .join(Category, PressRelease.category_id == Category.id)
-        .with_entities(
-            PressRelease.id,
-            PressRelease.report_id,
-            PressRelease.category_id,
-            Category.abr.label("category_abr"),
-            Category.url.label("category_url"),
-            Category.name.label("category_name"),
-            PressRelease.summary,
-            PressRelease.title,
-            PressRelease.created_date,
-            PressRelease.url,
-            PressRelease.cover_img,
+    if(category_url == 'all'):
+        press_releases =  (
+            # db.query(Report)
+            db.query(PressRelease)
+            .join(Category, PressRelease.category_id == Category.id)
+            .with_entities(
+                PressRelease.id,
+                PressRelease.report_id,
+                PressRelease.category_id,
+                Category.abr.label("category_abr"),
+                Category.url.label("category_url"),
+                Category.name.label("category_name"),
+                PressRelease.summary,
+                PressRelease.title,
+                PressRelease.created_date,
+                PressRelease.url,
+                PressRelease.cover_img,
+            )
+            # .filter(Category.url == category_url)
+            .offset(offset)
+            .limit(per_page)
+            .all()
         )
-        .filter(Category.url == category_url)
-        .offset(offset)
-        .limit(per_page)
-        .all()
-    )
+    else:
+        press_releases =  (
+            # db.query(Report)
+            db.query(PressRelease)
+            .join(Category, PressRelease.category_id == Category.id)
+            .with_entities(
+                PressRelease.id,
+                PressRelease.report_id,
+                PressRelease.category_id,
+                Category.abr.label("category_abr"),
+                Category.url.label("category_url"),
+                Category.name.label("category_name"),
+                PressRelease.summary,
+                PressRelease.title,
+                PressRelease.created_date,
+                PressRelease.url,
+                PressRelease.cover_img,
+            )
+            .filter(Category.url == category_url)
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        )
 
     press_release_list = [
         GetPressRelease(
