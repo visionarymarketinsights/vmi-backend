@@ -2,7 +2,7 @@ from typing import List
 from fastapi import Depends, APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Category, Report, ReportImage
+from app.models import Category, Report, ReportImage, Price
 from app.database import get_db
 from sqlalchemy import DateTime, desc, func, or_
 import os
@@ -262,6 +262,14 @@ async def get_searched_reports(
 async def get_report_by_id(report_id: int, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     return {"data": report}
+
+
+@router.get("/report_load/{report_id}")
+async def get_report_by_report_id(report_id: int, db: Session = Depends(get_db)):
+    report = db.query(Report).join(Category, Category.id == Report.category_id).filter(Report.id == report_id).first()
+    category = db.query(Category).filter(Category.id == report.category_id).first()
+    priceList = db.query(Price).all()
+    return {"data":{"report": report, "category":category, "price_list":priceList}}
 
 
 @router.get("/url/{report_url}")
