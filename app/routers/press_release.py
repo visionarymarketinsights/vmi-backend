@@ -69,6 +69,8 @@ class GetPressReleaseByUrl(BaseModel):
     created_date: str
     url: str
     cover_img: str
+    meta_desc: str
+    meta_keyword: str
 
 
 @router.get("/")
@@ -295,6 +297,8 @@ async def get_press_release_by_url(
             PressRelease.description,
             PressRelease.cover_img,
             PressRelease.created_date,
+            PressRelease.meta_desc,
+            PressRelease.meta_keyword,
         )
         .filter(PressRelease.url == press_release_url)
         .first()
@@ -311,6 +315,8 @@ async def get_press_release_by_url(
             title=press_release.title,
             cover_img=press_release.cover_img,
             description=press_release.description,
+            meta_desc=press_release.meta_desc,
+            meta_keyword=press_release.meta_keyword,
             created_date=press_release.created_date,
         )
     

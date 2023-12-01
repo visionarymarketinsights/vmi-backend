@@ -270,7 +270,8 @@ async def get_report_by_report_id(report_id: int, db: Session = Depends(get_db))
     report = db.query(Report).join(Category, Category.id == Report.category_id).filter(Report.id == report_id).first()
     category = db.query(Category).filter(Category.id == report.category_id).first()
     priceList = db.query(Price).all()
-    return {"data":{"report": report, "category":category, "price_list":priceList}}
+    images = db.query(ReportImage).filter(ReportImage.img_name.like(f"%RP{report_id}%")).all()
+    return {"data":{"report": report, "category":category, "price_list":priceList, "images": images}}
 
 
 @router.get("/url/{report_url}")
