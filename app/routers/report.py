@@ -93,6 +93,12 @@ class GetReportByUrl(BaseModel):
     pages: str
     cover_img: str
     created_date: str
+    
+class GetReportMetaData(BaseModel):
+    url: str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
 
 
 @router.get("/")
@@ -319,6 +325,29 @@ async def get_report_by_url(report_url: str, db: Session = Depends(get_db)):
         toc=report.toc,
         highlights=report.highlights,
         faqs=report.faqs,
+        meta_title=report.meta_title,
+        meta_desc=report.meta_desc,
+        meta_keyword=report.meta_keyword,
+    )
+
+    return {"data": get_report_data}
+
+@router.get("/meta/{report_url}")
+async def get_reportmeta_by_url(report_url: str, db: Session = Depends(get_db)):
+    report = (
+        db.query(Report)
+        .with_entities(
+            Report.url,
+            Report.meta_title,
+            Report.meta_desc,
+            Report.meta_keyword,
+        )
+        .filter(Report.url == report_url)
+        .first()
+    )
+
+    get_report_data = GetReportMetaData(
+        url=report.url,
         meta_title=report.meta_title,
         meta_desc=report.meta_desc,
         meta_keyword=report.meta_keyword,

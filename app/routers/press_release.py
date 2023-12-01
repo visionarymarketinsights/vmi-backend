@@ -71,6 +71,13 @@ class GetPressReleaseByUrl(BaseModel):
     cover_img: str
     meta_desc: str
     meta_keyword: str
+    
+
+class GetPressReleaseMetaData(BaseModel):
+    url: str
+    meta_title: str
+    meta_desc: str
+    meta_keyword: str
 
 
 @router.get("/")
@@ -267,20 +274,6 @@ async def get_press_release_by_id(press_release_id: int, db: Session = Depends(g
 async def get_press_release_by_url(
     press_release_url: str, db: Session = Depends(get_db)
 ):
-    # press_release = (
-    #     db.query(PressRelease, Category.name)
-    #     .join(Category, PressRelease.category_id == Category.id)
-    #     .filter(PressRelease.url == press_release_url)
-    #     .first()
-    # )
-    # if press_release:
-    #     press_release_data, category_name = press_release
-    #     press_release_data_dict = dict(press_release_data.__dict__)
-    #     press_release_data_dict["category_name"] = category_name
-    #     return {"data": press_release_data_dict}
-    # else:
-    #     return {"data": None}
-
     press_release = (
         db.query(PressRelease)
         .join(Category, PressRelease.category_id == Category.id)
@@ -318,6 +311,30 @@ async def get_press_release_by_url(
             meta_desc=press_release.meta_desc,
             meta_keyword=press_release.meta_keyword,
             created_date=press_release.created_date,
+        )
+    
+    return {"data": press_release_result}
+
+@router.get("/meta/{press_release_url}")
+async def get_press_release_meta_by_url(
+    press_release_url: str, db: Session = Depends(get_db)
+):
+    press_release = (
+        db.query(PressRelease)
+        .with_entities(
+            PressRelease.url,
+            PressRelease.meta_title,
+            PressRelease.meta_desc,
+            PressRelease.meta_keyword,
+        )
+        .filter(PressRelease.url == press_release_url)
+        .first()
+    )
+    press_release_result = GetPressReleaseMetaData(
+            url=press_release.url,
+            meta_title=press_release.meta_title,
+            meta_desc=press_release.meta_desc,
+            meta_keyword=press_release.meta_keyword,
         )
     
     return {"data": press_release_result}
