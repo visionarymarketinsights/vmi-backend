@@ -167,7 +167,7 @@ async def get_latest_reports(
             PressRelease.url,
             PressRelease.cover_img,
         )
-        .order_by(func.cast(PressRelease.created_date, DateTime).desc())
+        .order_by(func.cast(PressRelease.created_date, DateTime).desc(), PressRelease.created_date.asc())
         .offset(offset)
         .limit(per_page)
         .all()
@@ -195,7 +195,7 @@ async def get_press_release_by_category_url(
 ):
     offset = (page - 1) * per_page
 
-    if(category_url == 'all'):
+    if(category_url == 'all-industries'):
         press_releases =  (
             # db.query(Report)
             db.query(PressRelease)

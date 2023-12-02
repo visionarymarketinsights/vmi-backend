@@ -186,7 +186,7 @@ async def get_latest_reports(
             Report.summary,
             Report.cover_img,
         )
-        .order_by(func.cast(Report.created_date, DateTime).desc())
+        .order_by(func.cast(Report.created_date, DateTime).desc(), Report.id.asc())
         .offset(offset)
         .limit(per_page)
         .all()
@@ -366,31 +366,53 @@ async def get_reports_by_category(
     if category_url is None:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    # Calculate the offset to skip records based on the page and per_page values
     offset = (page - 1) * per_page
-
-    reports = (
-        # db.query(Report)
-        db.query(Report)
-        .join(Category, Report.category_id == Category.id)
-        .with_entities(
-            Report.id,
-            Report.url,
-            Report.category_id,
-            Category.name.label("category_name"),
-            Category.url.label("category_url"),
-            Report.summary,
-            Report.title,
-            Report.pages,
-            Report.cover_img,
-            Report.created_date,
+    
+    if(category_url != 'all-industries'):
+        reports = (
+            # db.query(Report)
+            db.query(Report)
+            .join(Category, Report.category_id == Category.id)
+            .with_entities(
+                Report.id,
+                Report.url,
+                Report.category_id,
+                Category.name.label("category_name"),
+                Category.url.label("category_url"),
+                Report.summary,
+                Report.title,
+                Report.pages,
+                Report.cover_img,
+                Report.created_date,
+            )
+            .filter(Category.url == category_url)
+            .order_by(func.cast(Report.created_date, DateTime).desc())
+            .offset(offset)
+            .limit(per_page)
+            .all()
         )
-        .filter(Category.url == category_url)
-        .order_by(func.cast(Report.created_date, DateTime).desc())
-        .offset(offset)
-        .limit(per_page)
-        .all()
-    )
+    else:
+        reports = (
+            # db.query(Report)
+            db.query(Report)
+            .join(Category, Report.category_id == Category.id)
+            .with_entities(
+                Report.id,
+                Report.url,
+                Report.category_id,
+                Category.name.label("category_name"),
+                Category.url.label("category_url"),
+                Report.summary,
+                Report.title,
+                Report.pages,
+                Report.cover_img,
+                Report.created_date,
+            )
+            .order_by(func.cast(Report.created_date, DateTime).desc())
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        )
 
     report_list = [
         GetReport(
