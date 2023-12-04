@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.models import Category, PressRelease
 from app.database import get_db
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func, or_
 
 router = APIRouter()
 
@@ -49,13 +49,15 @@ class GetPressRelease(BaseModel):
     created_date: str
     url: str
     cover_img: str
-    
+
+
 class GetLatestPressRelease(BaseModel):
     summary: str
     created_date: str
     url: str
     cover_img: str
-    
+
+
 class GetPressReleaseByUrl(BaseModel):
     id: int
     report_id: int
@@ -71,7 +73,7 @@ class GetPressReleaseByUrl(BaseModel):
     cover_img: str
     meta_desc: str
     meta_keyword: str
-    
+
 
 class GetPressReleaseMetaData(BaseModel):
     url: str
@@ -116,6 +118,69 @@ async def get_press_releases(db: Session = Depends(get_db)):
         )
         for press_release in press_releases
     ]
+    return {"data": press_release_list}
+
+
+@router.get("/search")
+async def get_searched_press_releases(
+    page: int,
+    per_page: int,
+    keyword: str,
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * per_page
+
+    press_releases = (
+        # db.query(Report)
+        db.query(PressRelease)
+        .join(Category, Category.id == PressRelease.category_id)
+        .with_entities(
+            PressRelease.id,
+            PressRelease.report_id,
+            PressRelease.category_id,
+            Category.abr.label("category_abr"),
+            Category.url.label("category_url"),
+            Category.name.label("category_name"),
+            PressRelease.summary,
+            PressRelease.title,
+            PressRelease.created_date,
+            PressRelease.url,
+            PressRelease.cover_img,
+        )
+        .filter(
+            # func.to_tsvector("english", Report.title).match(
+            #     keyword, postgresql_regconfig="english"
+            # )
+            or_(
+                func.to_tsvector("english", PressRelease.title).match(
+                    keyword, postgresql_regconfig="english"
+                ),
+                PressRelease.title.ilike(f"%{keyword}%"),
+            )
+        )
+        .order_by(func.cast(PressRelease.created_date, DateTime).desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    press_release_list = [
+        GetPressRelease(
+            id=press_release.id,
+            title=press_release.title,
+            report_id=press_release.report_id,
+            category_id=press_release.category_id,
+            category_name=press_release.category_name,
+            category_url=press_release.category_url,
+            category_abr=press_release.category_abr,
+            summary=press_release.summary,
+            created_date=press_release.created_date,
+            url=press_release.url,
+            cover_img=press_release.cover_img,
+        )
+        for press_release in press_releases
+    ]
+
     return {"data": press_release_list}
 
 
@@ -167,7 +232,10 @@ async def get_latest_reports(
             PressRelease.url,
             PressRelease.cover_img,
         )
-        .order_by(func.cast(PressRelease.created_date, DateTime).desc(), PressRelease.created_date.asc())
+        .order_by(
+            func.cast(PressRelease.created_date, DateTime).desc(),
+            PressRelease.created_date.asc(),
+        )
         .offset(offset)
         .limit(per_page)
         .all()
@@ -195,8 +263,8 @@ async def get_press_release_by_category_url(
 ):
     offset = (page - 1) * per_page
 
-    if(category_url == 'all-industries'):
-        press_releases =  (
+    if category_url == "all-industries":
+        press_releases = (
             # db.query(Report)
             db.query(PressRelease)
             .join(Category, PressRelease.category_id == Category.id)
@@ -219,7 +287,7 @@ async def get_press_release_by_category_url(
             .all()
         )
     else:
-        press_releases =  (
+        press_releases = (
             # db.query(Report)
             db.query(PressRelease)
             .join(Category, PressRelease.category_id == Category.id)
@@ -297,23 +365,24 @@ async def get_press_release_by_url(
         .first()
     )
     press_release_result = GetPressReleaseByUrl(
-            id=press_release.id,
-            url=press_release.url,
-            report_id=press_release.report_id,
-            category_id=press_release.category_id,
-            category_url=press_release.category_url,
-            category_name=press_release.category_name,
-            category_abr=press_release.category_abr,
-            summary=press_release.summary,
-            title=press_release.title,
-            cover_img=press_release.cover_img,
-            description=press_release.description,
-            meta_desc=press_release.meta_desc,
-            meta_keyword=press_release.meta_keyword,
-            created_date=press_release.created_date,
-        )
-    
+        id=press_release.id,
+        url=press_release.url,
+        report_id=press_release.report_id,
+        category_id=press_release.category_id,
+        category_url=press_release.category_url,
+        category_name=press_release.category_name,
+        category_abr=press_release.category_abr,
+        summary=press_release.summary,
+        title=press_release.title,
+        cover_img=press_release.cover_img,
+        description=press_release.description,
+        meta_desc=press_release.meta_desc,
+        meta_keyword=press_release.meta_keyword,
+        created_date=press_release.created_date,
+    )
+
     return {"data": press_release_result}
+
 
 @router.get("/meta/{press_release_url}")
 async def get_press_release_meta_by_url(
@@ -331,12 +400,12 @@ async def get_press_release_meta_by_url(
         .first()
     )
     press_release_result = GetPressReleaseMetaData(
-            url=press_release.url,
-            meta_title=press_release.meta_title,
-            meta_desc=press_release.meta_desc,
-            meta_keyword=press_release.meta_keyword,
-        )
-    
+        url=press_release.url,
+        meta_title=press_release.meta_title,
+        meta_desc=press_release.meta_desc,
+        meta_keyword=press_release.meta_keyword,
+    )
+
     return {"data": press_release_result}
 
 
