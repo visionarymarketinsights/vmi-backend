@@ -80,6 +80,7 @@ class GetPressReleaseMetaData(BaseModel):
     meta_title: str
     meta_desc: str
     meta_keyword: str
+    summary: str
 
 
 @router.get("/")
@@ -395,6 +396,7 @@ async def get_press_release_meta_by_url(
             PressRelease.meta_title,
             PressRelease.meta_desc,
             PressRelease.meta_keyword,
+            PressRelease.summary,
         )
         .filter(PressRelease.url == press_release_url)
         .first()
@@ -404,6 +406,7 @@ async def get_press_release_meta_by_url(
         meta_title=press_release.meta_title,
         meta_desc=press_release.meta_desc,
         meta_keyword=press_release.meta_keyword,
+        summary=press_release.summary,
     )
 
     return {"data": press_release_result}

@@ -69,6 +69,7 @@ class GetReport(BaseModel):
 
 
 class GetLatestReport(BaseModel):
+    title: str
     url: str
     summary: str
     cover_img: str
@@ -99,6 +100,7 @@ class GetReportMetaData(BaseModel):
     meta_title: str
     meta_desc: str
     meta_keyword: str
+    summary: str
 
 
 @router.get("/")
@@ -182,6 +184,7 @@ async def get_latest_reports(
     reports = (
         db.query(Report)
         .with_entities(
+            Report.title,
             Report.url,
             Report.summary,
             Report.cover_img,
@@ -194,6 +197,7 @@ async def get_latest_reports(
 
     report_list = [
         GetLatestReport(
+            title=report.title,
             url=report.url,
             summary=report.summary,
             cover_img=report.cover_img,
@@ -341,6 +345,7 @@ async def get_reportmeta_by_url(report_url: str, db: Session = Depends(get_db)):
             Report.meta_title,
             Report.meta_desc,
             Report.meta_keyword,
+            Report.summary,
         )
         .filter(Report.url == report_url)
         .first()
@@ -351,6 +356,7 @@ async def get_reportmeta_by_url(report_url: str, db: Session = Depends(get_db)):
         meta_title=report.meta_title,
         meta_desc=report.meta_desc,
         meta_keyword=report.meta_keyword,
+        summary=report.summary,
     )
 
     return {"data": get_report_data}
