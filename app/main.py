@@ -26,10 +26,9 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 origins = [
     "https://localhost:3000",
     "http://localhost:3000",
-    "https://congruence.onrender.com",
     "https://congruence.178765.xyz",
     "https://www.congruencemarketinsights.com",
-    "https://marketresearch-production-6eeb.up.railway.app",
+    "https://congruencemarketinsights.com",
 ]
 
 app.add_middleware(
