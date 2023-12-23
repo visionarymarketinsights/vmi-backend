@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import Depends, APIRouter, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -213,11 +213,12 @@ async def get_searched_reports(
     page: int,
     per_page: int,
     keyword: str,
+    category_id: Optional[int] = None,  # Make category_id optional
     db: Session = Depends(get_db),
 ):
     offset = (page - 1) * per_page
 
-    reports = (
+    query = (
         # db.query(Report)
         db.query(Report)
         .join(Category, Category.id == Report.category_id)
@@ -244,11 +245,17 @@ async def get_searched_reports(
                 Report.title.ilike(f"%{keyword}%"),
             )
         )
-        .order_by(func.cast(Report.created_date, DateTime).desc())
-        .offset(offset)
-        .limit(per_page)
-        .all()
+        # .order_by(func.cast(Report.created_date, DateTime).desc())
+        # .offset(offset)
+        # .limit(per_page)
     )
+    
+     # Apply category filter if category_id is provided
+    if category_id is not None:
+        query = query.filter(Report.category_id == category_id)
+
+
+    reports = query.order_by(func.cast(Report.created_date, DateTime).desc()).offset(offset).limit(per_page).all()
 
     report_list = [
         GetReport(
