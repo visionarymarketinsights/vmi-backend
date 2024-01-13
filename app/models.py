@@ -31,6 +31,9 @@ class Category(Base):
     url = Column(String, nullable=False, unique=True)
     icon = Column(String)
     back_cover = Column(String)
+    meta_title = Column(String)
+    meta_desc = Column(String)
+    meta_keyword = Column(String)
 
 
 class ReportImage(Base):
