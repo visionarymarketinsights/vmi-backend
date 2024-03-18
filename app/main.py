@@ -26,9 +26,8 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 origins = [
     "https://localhost:3000",
     "http://localhost:3000",
-    "https://congruence.178765.xyz",
-    "https://www.congruencemarketinsights.com",
-    "https://congruencemarketinsights.com",
+    "https://resilient-douhua-706e26.netlify.app",
+    "http://resilient-douhua-706e26.netlify.app",
 ]
 
 app.add_middleware(
