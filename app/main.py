@@ -28,6 +28,8 @@ origins = [
     "http://localhost:3000",
     "https://resilient-douhua-706e26.netlify.app",
     "http://resilient-douhua-706e26.netlify.app",
+    "https://visionary-market-research.onrender.com",
+    "http://visionary-market-research.onrender.com",
 ]
 
 app.add_middleware(
