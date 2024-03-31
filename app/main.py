@@ -26,8 +26,8 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 origins = [
     "https://localhost:3000",
     "http://localhost:3000",
-    "https://resilient-douhua-706e26.netlify.app",
-    "http://resilient-douhua-706e26.netlify.app",
+    "http://visionaryadmin.onrender.com",
+    "https://visionaryadmin.onrender.com",
 ]
 
 app.add_middleware(
