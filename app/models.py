@@ -20,6 +20,10 @@ class Report(Base):
     pages = Column(String)
     cover_img = Column(String)
     created_date = Column(String)
+    single_user_price = Column(String)
+    multi_user_price = Column(String)
+    corporate_price = Column(String)
+    excel_spreadsheet_price = Column(String)
     
 
 class Category(Base):

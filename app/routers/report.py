@@ -30,6 +30,10 @@ class CreateReport(BaseModel):
     pages: str
     cover_img: str
     created_date: str
+    single_user_price: str
+    multi_user_price: str
+    corporate_price: str
+    excel_spreadsheet_price: str
 
 
 class CreateReportWithImages(BaseModel):
@@ -53,6 +57,10 @@ class UpdateReport(BaseModel):
     pages: str
     cover_img: str
     created_date: str
+    single_user_price: str
+    multi_user_price: str
+    corporate_price: str
+    excel_spreadsheet_price: str
 
 
 class GetReport(BaseModel):
@@ -66,6 +74,10 @@ class GetReport(BaseModel):
     pages: str
     cover_img: str
     created_date: str
+    # single_user_price: str
+    # multi_user_price: str
+    # corporate_price: str
+    # excel_spreadsheet_price: str
 
 
 class GetLatestReport(BaseModel):
@@ -94,6 +106,10 @@ class GetReportByUrl(BaseModel):
     pages: str
     cover_img: str
     created_date: str
+    single_user_price: str
+    multi_user_price: str
+    corporate_price: str
+    excel_spreadsheet_price: str
     
 class GetReportMetaData(BaseModel):
     url: str
@@ -118,7 +134,7 @@ async def get_reports(db: Session = Depends(get_db)):
             Report.summary,
             Report.pages,
             Report.cover_img,
-            Report.created_date,
+            Report.created_date
         )
         .order_by(Report.id.desc())
         .all()
@@ -134,7 +150,7 @@ async def get_reports(db: Session = Depends(get_db)):
             title=report.title,
             cover_img=report.cover_img,
             pages=report.pages,
-            created_date=report.created_date,
+            created_date=report.created_date
         )
         for report in reports
     ]
@@ -232,7 +248,7 @@ async def get_searched_reports(
             Report.title,
             Report.pages,
             Report.cover_img,
-            Report.created_date,
+            Report.created_date
         )
         .filter(
             # func.to_tsvector("english", Report.title).match(
@@ -268,7 +284,7 @@ async def get_searched_reports(
             summary=report.summary,
             pages=report.pages,
             cover_img=report.cover_img,
-            created_date=report.created_date,
+            created_date=report.created_date
         )
         for report in reports
     ]
@@ -315,6 +331,10 @@ async def get_report_by_url(report_url: str, db: Session = Depends(get_db)):
             Report.meta_title,
             Report.meta_desc,
             Report.meta_keyword,
+            Report.single_user_price,
+            Report.multi_user_price,
+            Report.corporate_price,
+            Report.excel_spreadsheet_price
         )
         .filter(Report.url == report_url)
         .first()
@@ -339,6 +359,10 @@ async def get_report_by_url(report_url: str, db: Session = Depends(get_db)):
         meta_title=report.meta_title,
         meta_desc=report.meta_desc,
         meta_keyword=report.meta_keyword,
+        single_user_price=report.single_user_price,
+        multi_user_price=report.multi_user_price,
+        corporate_price=report.corporate_price,
+        excel_spreadsheet_price=report.excel_spreadsheet_price
     )
 
     return {"data": get_report_data}
