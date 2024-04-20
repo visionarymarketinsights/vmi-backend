@@ -32,6 +32,8 @@ origins = [
     "http://resilient-douhua-706e26.netlify.app",
     "https://visionary-market-research.onrender.com",
     "http://visionary-market-research.onrender.com",
+    "https://178765.xyz",
+    "http://178765.xyz",
 ]
 
 app.add_middleware(
