@@ -36,6 +36,8 @@ origins = [
     "http://178765.xyz",
     "https://visionarynextjs-nextjs.7c2g7o.easypanel.host",
     "http://visionarynextjs-nextjs.7c2g7o.easypanel.host",
+    "https://visionarynextjs-admin-console.7c2g7o.easypanel.host",
+    "http://visionarynextjs-admin-console.7c2g7o.easypanel.host",
 ]
 
 app.add_middleware(
