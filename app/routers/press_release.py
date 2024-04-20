@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.models import Category, PressRelease
+from app.models import NewsRoomCategory, PressRelease
 from app.database import get_db
 from sqlalchemy import DateTime, func, or_
 
@@ -87,14 +87,14 @@ class GetPressReleaseMetaData(BaseModel):
 async def get_press_releases(db: Session = Depends(get_db)):
     press_releases = (
         db.query(PressRelease)
-        .join(Category, PressRelease.category_id == Category.id)
+        .join(NewsRoomCategory, PressRelease.category_id == NewsRoomCategory.id)
         .with_entities(
             PressRelease.id,
             PressRelease.category_id,
             PressRelease.report_id,
-            Category.url.label("category_url"),
-            Category.abr.label("category_abr"),
-            Category.name.label("category_name"),
+            NewsRoomCategory.url.label("category_url"),
+            NewsRoomCategory.abr.label("category_abr"),
+            NewsRoomCategory.name.label("category_name"),
             PressRelease.summary,
             PressRelease.title,
             PressRelease.created_date,
@@ -134,14 +134,14 @@ async def get_searched_press_releases(
     press_releases = (
         # db.query(Report)
         db.query(PressRelease)
-        .join(Category, Category.id == PressRelease.category_id)
+        .join(NewsRoomCategory, NewsRoomCategory.id == PressRelease.category_id)
         .with_entities(
             PressRelease.id,
             PressRelease.report_id,
             PressRelease.category_id,
-            Category.abr.label("category_abr"),
-            Category.url.label("category_url"),
-            Category.name.label("category_name"),
+            NewsRoomCategory.abr.label("category_abr"),
+            NewsRoomCategory.url.label("category_url"),
+            NewsRoomCategory.name.label("category_name"),
             PressRelease.summary,
             PressRelease.title,
             PressRelease.created_date,
@@ -189,17 +189,17 @@ async def get_searched_press_releases(
 async def get_press_release_category_count(db: Session = Depends(get_db)):
     query = (
         db.query(
-            Category.id.label("category_id"),
-            Category.url.label("category_url"),
-            Category.abr.label("category_abr"),
-            Category.name.label("category_name"),
-            Category.back_cover.label("category_back_cover"),
-            Category.icon.label("category_icon"),
+            NewsRoomCategory.id.label("category_id"),
+            NewsRoomCategory.url.label("category_url"),
+            NewsRoomCategory.abr.label("category_abr"),
+            NewsRoomCategory.name.label("category_name"),
+            NewsRoomCategory.back_cover.label("category_back_cover"),
+            NewsRoomCategory.icon.label("category_icon"),
             func.count(PressRelease.category_id).label("count"),
         )
-        .join(Category, PressRelease.category_id == Category.id)
-        .group_by(Category.id)
-        .order_by(Category.name.asc())
+        .join(NewsRoomCategory, PressRelease.category_id == NewsRoomCategory.id)
+        .group_by(NewsRoomCategory.id)
+        .order_by(NewsRoomCategory.name.asc())
         .all()
     )
     result = [
@@ -268,21 +268,21 @@ async def get_press_release_by_category_url(
         press_releases = (
             # db.query(Report)
             db.query(PressRelease)
-            .join(Category, PressRelease.category_id == Category.id)
+            .join(NewsRoomCategory, PressRelease.category_id == NewsRoomCategory.id)
             .with_entities(
                 PressRelease.id,
                 PressRelease.report_id,
                 PressRelease.category_id,
-                Category.abr.label("category_abr"),
-                Category.url.label("category_url"),
-                Category.name.label("category_name"),
+                NewsRoomCategory.abr.label("category_abr"),
+                NewsRoomCategory.url.label("category_url"),
+                NewsRoomCategory.name.label("category_name"),
                 PressRelease.summary,
                 PressRelease.title,
                 PressRelease.created_date,
                 PressRelease.url,
                 PressRelease.cover_img,
             )
-            # .filter(Category.url == category_url)
+            # .filter(NewsRoomCategory.url == category_url)
             .offset(offset)
             .limit(per_page)
             .all()
@@ -291,21 +291,21 @@ async def get_press_release_by_category_url(
         press_releases = (
             # db.query(Report)
             db.query(PressRelease)
-            .join(Category, PressRelease.category_id == Category.id)
+            .join(NewsRoomCategory, PressRelease.category_id == NewsRoomCategory.id)
             .with_entities(
                 PressRelease.id,
                 PressRelease.report_id,
                 PressRelease.category_id,
-                Category.abr.label("category_abr"),
-                Category.url.label("category_url"),
-                Category.name.label("category_name"),
+                NewsRoomCategory.abr.label("category_abr"),
+                NewsRoomCategory.url.label("category_url"),
+                NewsRoomCategory.name.label("category_name"),
                 PressRelease.summary,
                 PressRelease.title,
                 PressRelease.created_date,
                 PressRelease.url,
                 PressRelease.cover_img,
             )
-            .filter(Category.url == category_url)
+            .filter(NewsRoomCategory.url == category_url)
             .offset(offset)
             .limit(per_page)
             .all()
@@ -345,15 +345,15 @@ async def get_press_release_by_url(
 ):
     press_release = (
         db.query(PressRelease)
-        .join(Category, PressRelease.category_id == Category.id)
+        .join(NewsRoomCategory, PressRelease.category_id == NewsRoomCategory.id)
         .with_entities(
             PressRelease.id,
             PressRelease.url,
             PressRelease.report_id,
             PressRelease.category_id,
-            Category.name.label("category_name"),
-            Category.url.label("category_url"),
-            Category.abr.label("category_abr"),
+            NewsRoomCategory.name.label("category_name"),
+            NewsRoomCategory.url.label("category_url"),
+            NewsRoomCategory.abr.label("category_abr"),
             PressRelease.title,
             PressRelease.summary,
             PressRelease.description,

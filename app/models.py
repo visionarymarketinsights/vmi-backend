@@ -39,6 +39,19 @@ class Category(Base):
     meta_desc = Column(String)
     meta_keyword = Column(String)
 
+class NewsRoomCategory(Base):
+    __tablename__ = "news_room_category"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    abr = Column(String)
+    name = Column(String)
+    url = Column(String, nullable=False, unique=True)
+    icon = Column(String)
+    back_cover = Column(String)
+    meta_title = Column(String)
+    meta_desc = Column(String)
+    meta_keyword = Column(String)
+
 
 class ReportImage(Base):
     __tablename__ = "report_image"
