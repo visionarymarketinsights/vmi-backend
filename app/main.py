@@ -34,8 +34,8 @@ origins = [
     "http://visionary-market-research.onrender.com",
     "https://178765.xyz",
     "http://178765.xyz",
-    "https://visionarynextjs-nextjs.7c2g7o.easypanel.host/",
-    "http://visionarynextjs-nextjs.7c2g7o.easypanel.host/",
+    "https://visionarynextjs-nextjs.7c2g7o.easypanel.host",
+    "http://visionarynextjs-nextjs.7c2g7o.easypanel.host",
 ]
 
 app.add_middleware(
