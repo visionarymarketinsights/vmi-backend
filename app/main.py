@@ -26,18 +26,12 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 origins = [
     "https://localhost:3000",
     "http://localhost:3000",
-    "http://visionaryadmin.onrender.com",
-    "https://visionaryadmin.onrender.com",
-    "https://resilient-douhua-706e26.netlify.app",
-    "http://resilient-douhua-706e26.netlify.app",
-    "https://visionary-market-research.onrender.com",
-    "http://visionary-market-research.onrender.com",
-    "https://178765.xyz",
-    "http://178765.xyz",
     "https://visionarynextjs-nextjs.7c2g7o.easypanel.host",
     "http://visionarynextjs-nextjs.7c2g7o.easypanel.host",
     "https://visionarynextjs-admin-console.7c2g7o.easypanel.host",
     "http://visionarynextjs-admin-console.7c2g7o.easypanel.host",
+    "https://www.visionarymarketinsights.com",
+    "https://admin.visionarymarketinsights.com",
 ]
 
 app.add_middleware(
