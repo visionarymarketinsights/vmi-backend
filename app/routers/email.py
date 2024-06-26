@@ -21,8 +21,10 @@ recaptcha_secret = os.environ["RECAPTCHA_SECRET_KEY"]
 
 
 class EmailRequest(BaseModel):
+    client_email: str
+    client_content: str
     subject: str
-    content: str
+    admin_content: str
     response_token: str
 class RecaptchaResponse(BaseModel):
     success: bool
@@ -51,7 +53,8 @@ async def email(email_request: EmailRequest, background_tasks: BackgroundTasks):
         response = requests.post(verification_url, data=payload)
 
         if response.json()['success']:
-            background_tasks.add_task(send_email_in_background, email_request)
+            background_tasks.add_task(send_email_in_background, email_request, is_client = True)
+            background_tasks.add_task(send_email_in_background, email_request, is_client = False)
             return {"message": "Email sent successfully"}
         else:
             return RecaptchaResponse(success=False, message='reCAPTCHA verification failed.')
@@ -59,16 +62,20 @@ async def email(email_request: EmailRequest, background_tasks: BackgroundTasks):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-def send_email_in_background(email_request: EmailRequest):
+def send_email_in_background(email_request: EmailRequest, is_client: bool):
     msg = MIMEMultipart()
     msg["From"] = "support@visionarymarketinsights.com"
-    msg["To"] = "support@visionarymarketinsights.com"
-    recipients = ["support@visionarymarketinsights.com"]
-    
     msg["Subject"] = email_request.subject
+    
+    if is_client == True:
+        msg["To"] = email_request.client_email
+        recipients = [email_request.client_email]
+        html_message = email_request.client_content
+    else:
+        msg["To"] = "support@visionarymarketinsights.com"
+        recipients = ["support@visionarymarketinsights.com"]
+        html_message = email_request.admin_content
 
-    # Add the HTML message body
-    html_message = email_request.content
     msg.attach(MIMEText(html_message, "html"))
 
     # Create an SMTP server connection
