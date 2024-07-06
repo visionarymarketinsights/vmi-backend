@@ -29,4 +29,4 @@ This example starts up a [FastAPI](https://fastapi.tiangolo.com/) server.
 - To learn about Hypercorn and how to configure it, read their [Documentation](https://hypercorn.readthedocs.io/)
 
 
-# IDGAF about your projekt
+# IDGAF updated
